@@ -34,8 +34,8 @@ resource "aws_api_gateway_method" "upload_post" {
   rest_api_id   = var.rest_api_id
   resource_id   = aws_api_gateway_resource.upload.id
   http_method   = "POST"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = var.authorizer_id
+  authorization = "CUSTOM"
+  authorizer_id = var.lambda_authorizer_id
 }
 
 resource "aws_api_gateway_integration" "upload_lambda" {

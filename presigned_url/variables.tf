@@ -25,3 +25,8 @@ variable "authorizer_id" {
 variable "execution_arn" {
   type = string
 }
+
+variable "lambda_authorizer_id" {
+  type        = string
+  description = "Lambda AuthorizerのID"
+}
