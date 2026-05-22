@@ -20,6 +20,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "Lambda エラー数"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
           metrics = [
@@ -37,6 +38,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "Lambda 実行時間"
+          region = var.aws_region
           period = 300
           stat   = "Average"
           metrics = [
@@ -54,6 +56,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "API Gateway レイテンシ"
+          region = var.aws_region
           period = 300
           stat   = "Average"
           metrics = [
@@ -69,6 +72,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "API Gateway 4XXエラー"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
           metrics = [
