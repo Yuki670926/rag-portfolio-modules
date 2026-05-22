@@ -1,4 +1,4 @@
-resource "aws_cognito_user_pool" "main" {
+﻿resource "aws_cognito_user_pool" "main" {
   name = "${var.project_name}-user-pool"
 
   password_policy {
@@ -35,4 +35,48 @@ resource "aws_cognito_user_pool_client" "main" {
 
   prevent_user_existence_errors = "ENABLED"
   refresh_token_validity        = 30
+}
+
+resource "aws_cognito_user_pool_group" "admin" {
+  name         = "Admin"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Admin group"
+}
+
+resource "aws_cognito_user_pool_group" "user" {
+  name         = "User"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "User group"
+}
+
+data "aws_secretsmanager_secret" "admin_password" {
+  name = "rp-${var.environment}-cognito-admin-password"
+}
+
+data "aws_secretsmanager_secret_version" "admin_password" {
+  secret_id = data.aws_secretsmanager_secret.admin_password.id
+}
+
+resource "aws_cognito_user" "admin" {
+  user_pool_id = aws_cognito_user_pool.main.id
+  username     = var.admin_email
+
+  attributes = {
+    email          = var.admin_email
+    email_verified = true
+  }
+
+  temporary_password = jsondecode(
+    data.aws_secretsmanager_secret_version.admin_password.secret_string
+  )["password"]
+
+  lifecycle {
+    ignore_changes = [temporary_password]
+  }
+}
+
+resource "aws_cognito_user_in_group" "admin" {
+  user_pool_id = aws_cognito_user_pool.main.id
+  group_name   = aws_cognito_user_pool_group.admin.name
+  username     = aws_cognito_user.admin.username
 }
