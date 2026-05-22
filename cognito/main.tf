@@ -46,13 +46,13 @@ resource "aws_cognito_user_pool_client" "main" {
   refresh_token_validity        = 30
 }
 
-resource "aws_cognito_user_pool_group" "admin" {
+resource "aws_cognito_user_group" "admin" {
   name         = "Admin"
   user_pool_id = aws_cognito_user_pool.main.id
   description  = "Admin group"
 }
 
-resource "aws_cognito_user_pool_group" "user" {
+resource "aws_cognito_user_group" "user" {
   name         = "User"
   user_pool_id = aws_cognito_user_pool.main.id
   description  = "User group"
@@ -86,6 +86,6 @@ resource "aws_cognito_user" "admin" {
 
 resource "aws_cognito_user_in_group" "admin" {
   user_pool_id = aws_cognito_user_pool.main.id
-  group_name   = aws_cognito_user_pool_group.admin.name
+  group_name   = aws_cognito_user_group.admin.name
   username     = aws_cognito_user.admin.username
 }
