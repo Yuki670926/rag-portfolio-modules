@@ -1,4 +1,13 @@
-﻿resource "aws_cognito_user_pool" "main" {
+﻿terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.0"
+    }
+  }
+}
+
+resource "aws_cognito_user_pool" "main" {
   name = "${var.project_name}-user-pool"
 
   password_policy {
