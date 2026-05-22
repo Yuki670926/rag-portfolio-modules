@@ -136,7 +136,7 @@ resource "aws_api_gateway_gateway_response" "cors_4xx" {
   response_type = "DEFAULT_4XX"
 
   response_parameters = {
-    "gatewayresponse.header.Access-Control-Allow-Origin" = "'https://d32plaikqyrb8u.cloudfront.net'"
+    "gatewayresponse.header.Access-Control-Allow-Origin"  = "'https://${var.cloudfront_domain}'"
     "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
     "gatewayresponse.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
   }
@@ -147,9 +147,61 @@ resource "aws_api_gateway_gateway_response" "cors_5xx" {
   response_type = "DEFAULT_5XX"
 
   response_parameters = {
-    "gatewayresponse.header.Access-Control-Allow-Origin" = "'https://d32plaikqyrb8u.cloudfront.net'"
+    "gatewayresponse.header.Access-Control-Allow-Origin"  = "'https://${var.cloudfront_domain}'"
     "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
     "gatewayresponse.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
   }
 }
 
+# Lambda Authorizer
+resource "aws_iam_role" "lambda_authorizer" {
+  name = "${var.project_name}-lambda-authorizer-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_authorizer" {
+  name = "${var.project_name}-lambda-authorizer-policy"
+  role = aws_iam_role.lambda_authorizer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_api_gateway_authorizer" "lambda" {
+  name                             = "${var.project_name}-lambda-authorizer"
+  rest_api_id                      = aws_api_gateway_rest_api.main.id
+  type                             = "TOKEN"
+  authorizer_uri                   = var.authorizer_lambda_invoke_arn
+  identity_source                  = "method.request.header.Authorization"
+  authorizer_result_ttl_in_seconds = 300
+}
+
+resource "aws_lambda_permission" "api_gateway_authorizer" {
+  statement_id  = "AllowAPIGatewayInvokeAuthorizer"
+  action        = "lambda:InvokeFunction"
+  function_name = var.authorizer_lambda_arn
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/authorizers/*"
+}

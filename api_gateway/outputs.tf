@@ -17,3 +17,7 @@ output "authorizer_id" {
 output "execution_arn" {
   value = aws_api_gateway_rest_api.main.execution_arn
 }
+
+output "lambda_authorizer_id" {
+  value = aws_api_gateway_authorizer.lambda.id
+}

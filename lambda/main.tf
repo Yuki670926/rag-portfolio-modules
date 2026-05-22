@@ -10,6 +10,12 @@ data "archive_file" "query" {
   output_path = "${path.root}/../lambda/query.zip"
 }
 
+data "archive_file" "authorizer" {
+  type        = "zip"
+  source_dir  = "${path.root}/../lambda/authorizer"
+  output_path = "${path.root}/../lambda/authorizer.zip"
+}
+
 # IAMロール
 resource "aws_iam_role" "lambda" {
   name = "${var.project_name}-lambda-role"
@@ -105,6 +111,30 @@ resource "aws_lambda_function" "query" {
 
   tags = {
     Name = "${var.project_name}-query"
+  }
+}
+
+# authorizer Lambda
+resource "aws_lambda_function" "authorizer" {
+  filename         = data.archive_file.authorizer.output_path
+  function_name    = "${var.project_name}-authorizer"
+  role             = aws_iam_role.lambda.arn
+  handler          = "handler.handler"
+  runtime          = "python3.12"
+  timeout          = 30
+  source_code_hash = data.archive_file.authorizer.output_base64sha256
+
+  environment {
+    variables = {
+      REGION        = var.aws_region
+      USER_POOL_ID  = var.cognito_user_pool_id
+      APP_CLIENT_ID = var.cognito_client_id
+      ALLOWED_GROUP = "Admin"
+    }
+  }
+
+  tags = {
+    Name = "${var.project_name}-authorizer"
   }
 }
 
