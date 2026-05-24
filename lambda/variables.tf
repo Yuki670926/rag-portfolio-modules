@@ -26,3 +26,13 @@ variable "cognito_client_id" {
   type        = string
   description = "CognitoクライアントID"
 }
+
+variable "conversations_table_name" {
+  type        = string
+  description = "会話履歴テーブル名"
+}
+
+variable "sessions_table_name" {
+  type        = string
+  description = "セッション管理テーブル名"
+}

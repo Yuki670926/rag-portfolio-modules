@@ -68,6 +68,7 @@ resource "aws_iam_role_policy" "lambda" {
         ]
         Resource = "*"
       }
+
     ]
   })
 }
@@ -102,13 +103,13 @@ resource "aws_lambda_function" "query" {
   runtime          = "python3.12"
   timeout          = 60
   source_code_hash = data.archive_file.query.output_base64sha256
-
   environment {
     variables = {
-      OPENSEARCH_ENDPOINT = var.opensearch_endpoint
+      OPENSEARCH_ENDPOINT      = var.opensearch_endpoint
+      CONVERSATIONS_TABLE      = var.conversations_table_name
+      SESSIONS_TABLE           = var.sessions_table_name
     }
   }
-
   tags = {
     Name = "${var.project_name}-query"
   }
@@ -146,3 +147,4 @@ resource "aws_lambda_permission" "s3_ingest" {
   principal     = "s3.amazonaws.com"
   source_arn    = var.documents_bucket_arn
 }
+
