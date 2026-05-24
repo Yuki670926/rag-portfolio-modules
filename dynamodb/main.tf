@@ -1,0 +1,76 @@
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
+resource "aws_dynamodb_table" "conversations" {
+  name         = "${local.name_prefix}-conversations"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "user_id"
+  range_key    = "timestamp"
+
+  attribute {
+    name = "user_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-conversations"
+  }
+}
+
+resource "aws_dynamodb_table" "sessions" {
+  name         = "${local.name_prefix}-sessions"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "user_id"
+  range_key    = "last_accessed_at"
+
+  attribute {
+    name = "user_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "last_accessed_at"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-sessions"
+  }
+}
+
+resource "aws_dynamodb_table" "pdf_indexes" {
+  name         = "${local.name_prefix}-pdf-indexes"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "user_id"
+  range_key    = "pdf_name"
+
+  attribute {
+    name = "user_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "pdf_name"
+    type = "S"
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-pdf-indexes"
+  }
+}
