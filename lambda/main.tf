@@ -81,6 +81,7 @@ resource "aws_lambda_function" "ingest" {
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 300
+  memory_size      = var.memory_size
   source_code_hash = data.archive_file.ingest.output_base64sha256
 
   environment {
@@ -102,6 +103,7 @@ resource "aws_lambda_function" "query" {
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 60
+  memory_size      = var.memory_size
   source_code_hash = data.archive_file.query.output_base64sha256
   environment {
     variables = {

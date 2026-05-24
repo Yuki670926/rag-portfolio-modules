@@ -36,3 +36,9 @@ variable "sessions_table_name" {
   type        = string
   description = "セッション管理テーブル名"
 }
+
+variable "memory_size" {
+  type        = number
+  description = "Lambdaメモリサイズ（MB）"
+  default     = 512
+}
