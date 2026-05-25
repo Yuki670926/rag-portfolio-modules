@@ -6,11 +6,6 @@ variable "documents_bucket_arn" {
   type = string
 }
 
-variable "opensearch_endpoint" {
-  type    = string
-  default = ""
-}
-
 variable "aws_region" {
   type        = string
   description = "AWSリージョン"
@@ -41,4 +36,15 @@ variable "memory_size" {
   type        = number
   description = "Lambdaメモリサイズ（MB）"
   default     = 512
+}
+
+variable "vector_store_type" {
+  type        = string
+  description = "ベクトルストアの種類（opensearch or s3_vectors）"
+  default     = "opensearch"
+}
+
+variable "environment" {
+  type        = string
+  description = "環境名（dev/stag/prod）"
 }

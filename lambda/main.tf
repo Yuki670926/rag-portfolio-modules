@@ -78,6 +78,13 @@ resource "aws_iam_role_policy" "lambda" {
           "arn:aws:dynamodb:${var.aws_region}:*:table/${var.conversations_table_name}",
           "arn:aws:dynamodb:${var.aws_region}:*:table/${var.sessions_table_name}"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter"
+        ]
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
       }
 
     ]
@@ -96,10 +103,12 @@ resource "aws_lambda_function" "ingest" {
   source_code_hash = data.archive_file.ingest.output_base64sha256
 
   environment {
-    variables = {
-      OPENSEARCH_ENDPOINT = var.opensearch_endpoint
-    }
+  variables = {
+    VECTOR_STORE_TYPE  = var.vector_store_type
+    AWS_REGION         = var.aws_region
+    SSM_ENDPOINT_PARAM = "/rp/${var.environment}/vector-store/endpoint"
   }
+}
 
   tags = {
     Name = "${var.project_name}-ingest"
@@ -116,42 +125,21 @@ resource "aws_lambda_function" "query" {
   timeout          = 60
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.query.output_base64sha256
+
   environment {
-    variables = {
-      OPENSEARCH_ENDPOINT      = var.opensearch_endpoint
-      CONVERSATIONS_TABLE      = var.conversations_table_name
-      SESSIONS_TABLE           = var.sessions_table_name
-    }
+  variables = {
+    VECTOR_STORE_TYPE    = var.vector_store_type
+    AWS_REGION           = var.aws_region
+    SSM_ENDPOINT_PARAM   = "/rp/${var.environment}/vector-store/endpoint"
+    CONVERSATIONS_TABLE  = var.conversations_table_name
+    SESSIONS_TABLE       = var.sessions_table_name
   }
+}
+
   tags = {
     Name = "${var.project_name}-query"
   }
 }
-
-# authorizer Lambda
-resource "aws_lambda_function" "authorizer" {
-  filename         = data.archive_file.authorizer.output_path
-  function_name    = "${var.project_name}-authorizer"
-  role             = aws_iam_role.lambda.arn
-  handler          = "handler.handler"
-  runtime          = "python3.12"
-  timeout          = 30
-  source_code_hash = data.archive_file.authorizer.output_base64sha256
-
-  environment {
-    variables = {
-      REGION        = var.aws_region
-      USER_POOL_ID  = var.cognito_user_pool_id
-      APP_CLIENT_ID = var.cognito_client_id
-      ALLOWED_GROUP = "Admin"
-    }
-  }
-
-  tags = {
-    Name = "${var.project_name}-authorizer"
-  }
-}
-
 # S3からLambdaを呼び出す権限
 resource "aws_lambda_permission" "s3_ingest" {
   statement_id  = "AllowS3Invoke"
