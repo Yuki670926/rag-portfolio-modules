@@ -67,6 +67,17 @@ resource "aws_iam_role_policy" "lambda" {
           "aoss:APIAccessAll"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:Query",
+          "dynamodb:PutItem"
+        ]
+        Resource = [
+          "arn:aws:dynamodb:${var.aws_region}:*:table/${var.conversations_table_name}",
+          "arn:aws:dynamodb:${var.aws_region}:*:table/${var.sessions_table_name}"
+        ]
       }
 
     ]
