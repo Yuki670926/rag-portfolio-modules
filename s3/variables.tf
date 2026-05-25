@@ -10,3 +10,8 @@ variable "ingest_lambda_arn" {
   type    = string
   default = ""
 }
+
+variable "cloudfront_domain" {
+  type        = string
+  description = "CloudFrontドメイン名"
+}
