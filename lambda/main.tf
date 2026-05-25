@@ -105,7 +105,6 @@ resource "aws_lambda_function" "ingest" {
   environment {
   variables = {
     VECTOR_STORE_TYPE  = var.vector_store_type
-    AWS_REGION         = var.aws_region
     SSM_ENDPOINT_PARAM = "/rp/${var.environment}/vector-store/endpoint"
   }
 }
@@ -129,7 +128,6 @@ resource "aws_lambda_function" "query" {
   environment {
   variables = {
     VECTOR_STORE_TYPE    = var.vector_store_type
-    AWS_REGION           = var.aws_region
     SSM_ENDPOINT_PARAM   = "/rp/${var.environment}/vector-store/endpoint"
     CONVERSATIONS_TABLE  = var.conversations_table_name
     SESSIONS_TABLE       = var.sessions_table_name
