@@ -176,3 +176,15 @@ resource "aws_lambda_permission" "opensearch_stop_evening" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.opensearch_stop_evening.arn
 }
+
+# opensearch-start Lambdaリトライ設定
+resource "aws_lambda_function_event_invoke_config" "opensearch_start" {
+  function_name          = aws_lambda_function.opensearch_start.function_name
+  maximum_retry_attempts = 2
+}
+
+# opensearch-stop Lambdaリトライ設定
+resource "aws_lambda_function_event_invoke_config" "opensearch_stop" {
+  function_name          = aws_lambda_function.opensearch_stop.function_name
+  maximum_retry_attempts = 2
+}

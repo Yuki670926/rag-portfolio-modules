@@ -182,3 +182,8 @@ resource "aws_lambda_permission" "s3_ingest" {
   source_arn    = var.documents_bucket_arn
 }
 
+# ingest Lambdaリトライ設定
+resource "aws_lambda_function_event_invoke_config" "ingest" {
+  function_name          = aws_lambda_function.ingest.function_name
+  maximum_retry_attempts = 2
+}
