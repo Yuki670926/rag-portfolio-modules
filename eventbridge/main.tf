@@ -36,6 +36,10 @@ resource "aws_lambda_function" "opensearch_start" {
   tags = {
     Name = "${var.project_name}-opensearch-start"
   }
+
+  dead_letter_config {
+    target_arn = var.opensearch_start_dlq_arn
+  }
 }
 
 data "archive_file" "opensearch_start" {
@@ -64,6 +68,10 @@ resource "aws_lambda_function" "opensearch_stop" {
 
   tags = {
     Name = "${var.project_name}-opensearch-stop"
+  }
+
+  dead_letter_config {
+    target_arn = var.opensearch_stop_dlq_arn
   }
 }
 

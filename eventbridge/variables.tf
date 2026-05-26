@@ -52,3 +52,13 @@ variable "alert_email" {
   type        = string
   description = "SNS通知先メールアドレス"
 }
+
+variable "opensearch_start_dlq_arn" {
+  type        = string
+  description = "opensearch-start Lambda用DLQのARN"
+}
+
+variable "opensearch_stop_dlq_arn" {
+  type        = string
+  description = "opensearch-stop Lambda用DLQのARN"
+}
