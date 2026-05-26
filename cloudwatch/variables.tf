@@ -7,3 +7,8 @@ variable "aws_region" {
   description = "AWSリージョン"
   default     = "ap-northeast-1"
 }
+
+variable "sns_topic_arn" {
+  type        = string
+  description = "SNSトピックARN（アラート通知用）"
+}

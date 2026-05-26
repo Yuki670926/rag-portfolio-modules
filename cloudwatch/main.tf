@@ -83,3 +83,57 @@ resource "aws_cloudwatch_dashboard" "main" {
     ]
   })
 }
+
+# ingest Lambda エラーアラーム
+resource "aws_cloudwatch_metric_alarm" "ingest_errors" {
+  alarm_name          = "${var.project_name}-ingest-errors"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 60
+  statistic           = "Sum"
+  threshold           = 1
+  alarm_description   = "ingest Lambdaでエラーが発生しました"
+  alarm_actions       = [var.sns_topic_arn]
+
+  dimensions = {
+    FunctionName = "${var.project_name}-ingest"
+  }
+}
+
+# opensearch-start Lambda エラーアラーム
+resource "aws_cloudwatch_metric_alarm" "opensearch_start_errors" {
+  alarm_name          = "${var.project_name}-opensearch-start-errors"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 60
+  statistic           = "Sum"
+  threshold           = 1
+  alarm_description   = "opensearch-start Lambdaでエラーが発生しました"
+  alarm_actions       = [var.sns_topic_arn]
+
+  dimensions = {
+    FunctionName = "${var.project_name}-opensearch-start"
+  }
+}
+
+# opensearch-stop Lambda エラーアラーム
+resource "aws_cloudwatch_metric_alarm" "opensearch_stop_errors" {
+  alarm_name          = "${var.project_name}-opensearch-stop-errors"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 60
+  statistic           = "Sum"
+  threshold           = 1
+  alarm_description   = "opensearch-stop Lambdaでエラーが発生しました"
+  alarm_actions       = [var.sns_topic_arn]
+
+  dimensions = {
+    FunctionName = "${var.project_name}-opensearch-stop"
+  }
+}
