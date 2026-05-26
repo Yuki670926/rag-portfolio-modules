@@ -48,3 +48,8 @@ variable "environment" {
   type        = string
   description = "環境名（dev/stag/prod）"
 }
+
+variable "ingest_dlq_arn" {
+  type        = string
+  description = "ingest Lambda用DLQのARN"
+}

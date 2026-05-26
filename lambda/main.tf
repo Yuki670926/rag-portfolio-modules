@@ -85,8 +85,14 @@ resource "aws_iam_role_policy" "lambda" {
           "ssm:GetParameter"
         ]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage"
+        ]
+        Resource = var.ingest_dlq_arn
       }
-
     ]
   })
 }
@@ -111,6 +117,10 @@ resource "aws_lambda_function" "ingest" {
 
   tags = {
     Name = "${var.project_name}-ingest"
+  }
+
+  dead_letter_config {
+    target_arn = var.ingest_dlq_arn
   }
 }
 
