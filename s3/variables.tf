@@ -15,3 +15,8 @@ variable "cloudfront_domain" {
   type        = string
   description = "CloudFrontドメイン名"
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "S3用KMSキーのARN"
+}

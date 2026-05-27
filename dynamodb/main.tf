@@ -26,6 +26,11 @@ resource "aws_dynamodb_table" "conversations" {
   tags = {
     Name = "${local.name_prefix}-conversations"
   }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = var.kms_key_arn
+  }
 }
 
 resource "aws_dynamodb_table" "sessions" {
@@ -52,6 +57,11 @@ resource "aws_dynamodb_table" "sessions" {
   tags = {
     Name = "${local.name_prefix}-sessions"
   }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = var.kms_key_arn
+  }
 }
 
 resource "aws_dynamodb_table" "pdf_indexes" {
@@ -72,5 +82,10 @@ resource "aws_dynamodb_table" "pdf_indexes" {
 
   tags = {
     Name = "${local.name_prefix}-pdf-indexes"
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = var.kms_key_arn
   }
 }

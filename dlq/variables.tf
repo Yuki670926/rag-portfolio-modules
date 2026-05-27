@@ -18,3 +18,8 @@ variable "message_retention_seconds" {
   description = "メッセージの保持期間（秒）"
   default     = 1209600  # 14日間
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "SQS用KMSキーのARN"
+}
