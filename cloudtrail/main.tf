@@ -15,6 +15,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail" {
     id     = "cloudtrail-log-retention"
     status = "Enabled"
 
+    filter {}
+
     expiration {
       days = var.log_retention_days
     }
