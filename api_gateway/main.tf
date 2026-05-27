@@ -80,7 +80,7 @@ resource "aws_api_gateway_integration_response" "query_options" {
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'https://${var.cloudfront_domain}'"
   }
   depends_on = [aws_api_gateway_integration.query_options]
 }
@@ -90,14 +90,14 @@ resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
 
   triggers = {
-  redeployment = sha1(jsonencode([
-    aws_api_gateway_resource.query.id,
-    aws_api_gateway_method.query_post.id,
-    aws_api_gateway_integration.query_lambda.id,
-    aws_api_gateway_gateway_response.cors_4xx.id,
-    aws_api_gateway_gateway_response.cors_5xx.id,
-  ]))
-}
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.query.id,
+      aws_api_gateway_method.query_post.id,
+      aws_api_gateway_integration.query_lambda.id,
+      aws_api_gateway_gateway_response.cors_4xx.id,
+      aws_api_gateway_gateway_response.cors_5xx.id,
+    ]))
+  }
 
   depends_on = [
     aws_api_gateway_integration.query_lambda,

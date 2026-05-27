@@ -120,7 +120,7 @@ resource "aws_api_gateway_integration_response" "upload_options" {
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'https://${var.cloudfront_domain}'"
   }
   depends_on = [aws_api_gateway_integration.upload_options]
 }

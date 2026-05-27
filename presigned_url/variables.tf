@@ -32,3 +32,8 @@ variable "lambda_authorizer_id" {
   type        = string
   description = "Lambda AuthorizerのID"
 }
+
+variable "cloudfront_domain" {
+  type        = string
+  description = "CloudFrontのドメイン名"
+}
