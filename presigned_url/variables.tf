@@ -2,12 +2,14 @@
   type = string
 }
 
-variable "lambda_role_arn" {
+variable "documents_bucket_name" {
   type = string
 }
 
-variable "documents_bucket_name" {
-  type = string
+# S3バケットARN（IAMポリシーで使用）
+variable "documents_bucket_arn" {
+  type        = string
+  description = "ドキュメントS3バケットのARN"
 }
 
 variable "rest_api_id" {

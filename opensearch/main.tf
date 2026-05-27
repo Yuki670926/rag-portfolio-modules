@@ -47,7 +47,8 @@ resource "aws_opensearchserverless_access_policy" "main" {
       }
     ]
     Principal = [
-      var.lambda_role_arn,
+      var.ingest_lambda_role_arn,
+      var.query_lambda_role_arn,
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
     ]
   }])

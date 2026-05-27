@@ -4,10 +4,46 @@
   output_path = "${path.root}/../lambda/presigned_url.zip"
 }
 
+# presigned-url Lambda IAMロール
+resource "aws_iam_role" "presigned_url" {
+  name = "${var.project_name}-presigned-url-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+# presigned-url Lambda IAMポリシー
+resource "aws_iam_role_policy" "presigned_url" {
+  name = "${var.project_name}-presigned-url-lambda-policy"
+  role = aws_iam_role.presigned_url.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
+        Resource = "${var.documents_bucket_arn}/*"
+      }
+    ]
+  })
+}
+
 resource "aws_lambda_function" "presigned_url" {
   filename         = data.archive_file.presigned_url.output_path
   function_name    = "${var.project_name}-presigned-url"
-  role             = var.lambda_role_arn
+  role             = aws_iam_role.presigned_url.arn
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 30

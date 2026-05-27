@@ -43,11 +43,6 @@ variable "sns_topic_arn" {
   description = "SNS通知トピックARN"
 }
 
-variable "lambda_role_arn" {
-  type        = string
-  description = "LambdaのIAMロールARN"
-}
-
 variable "alert_email" {
   type        = string
   description = "SNS通知先メールアドレス"
@@ -61,4 +56,15 @@ variable "opensearch_start_dlq_arn" {
 variable "opensearch_stop_dlq_arn" {
   type        = string
   description = "opensearch-stop Lambda用DLQのARN"
+}
+
+variable "aws_region" {
+  type        = string
+  description = "AWSリージョン"
+  default     = "ap-northeast-1"
+}
+
+variable "pdf_indexes_table_arn" {
+  type        = string
+  description = "PDF indexes DynamoDBテーブルのARN"
 }

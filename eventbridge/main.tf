@@ -12,11 +12,118 @@ resource "aws_sns_topic_subscription" "email" {
   endpoint  = var.alert_email
 }
 
+# opensearch-start Lambda IAMロール
+resource "aws_iam_role" "opensearch_start" {
+  name = "${var.project_name}-opensearch-start-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+# opensearch-start Lambda IAMポリシー
+resource "aws_iam_role_policy" "opensearch_start" {
+  name = "${var.project_name}-opensearch-start-lambda-policy"
+  role = aws_iam_role.opensearch_start.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["aoss:APIAccessAll"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter", "ssm:PutParameter"]
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:Scan"]
+        Resource = var.pdf_indexes_table_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunction"]
+        Resource = var.ingest_lambda_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sns:Publish"]
+        Resource = aws_sns_topic.opensearch_notification.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
+        Resource = var.opensearch_start_dlq_arn
+      }
+    ]
+  })
+}
+
+# opensearch-stop Lambda IAMロール
+resource "aws_iam_role" "opensearch_stop" {
+  name = "${var.project_name}-opensearch-stop-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+# opensearch-stop Lambda IAMポリシー
+resource "aws_iam_role_policy" "opensearch_stop" {
+  name = "${var.project_name}-opensearch-stop-lambda-policy"
+  role = aws_iam_role.opensearch_stop.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["aoss:APIAccessAll"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sns:Publish"]
+        Resource = aws_sns_topic.opensearch_notification.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
+        Resource = var.opensearch_stop_dlq_arn
+      }
+    ]
+  })
+}
+
 # 起動Lambda
 resource "aws_lambda_function" "opensearch_start" {
   filename         = data.archive_file.opensearch_start.output_path
   function_name    = "${var.project_name}-opensearch-start"
-  role             = var.lambda_role_arn
+  role             = aws_iam_role.opensearch_start.arn
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 600
@@ -52,7 +159,7 @@ data "archive_file" "opensearch_start" {
 resource "aws_lambda_function" "opensearch_stop" {
   filename         = data.archive_file.opensearch_stop.output_path
   function_name    = "${var.project_name}-opensearch-stop"
-  role             = var.lambda_role_arn
+  role             = aws_iam_role.opensearch_stop.arn
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 60

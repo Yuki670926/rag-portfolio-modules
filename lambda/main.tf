@@ -16,9 +16,9 @@ data "archive_file" "authorizer" {
   output_path = "${path.root}/../lambda/authorizer.zip"
 }
 
-# IAMロール
-resource "aws_iam_role" "lambda" {
-  name = "${var.project_name}-lambda-role"
+# ingest Lambda IAMロール
+resource "aws_iam_role" "ingest" {
+  name = "${var.project_name}-lambda-ingest-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -30,50 +30,88 @@ resource "aws_iam_role" "lambda" {
   })
 }
 
-resource "aws_iam_role_policy" "lambda" {
-  name = "${var.project_name}-lambda-policy"
-  role = aws_iam_role.lambda.id
+# ingest Lambda IAMポリシー
+resource "aws_iam_role_policy" "ingest" {
+  name = "${var.project_name}-lambda-ingest-policy"
+  role = aws_iam_role.ingest.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
+        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:*:*:*"
       },
       {
         Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject"
-        ]
+        Action = ["s3:GetObject"]
         Resource = "${var.documents_bucket_arn}/*"
       },
       {
         Effect = "Allow"
-        Action = [
-          "bedrock:InvokeModel"
-        ]
+        Action = ["bedrock:InvokeModel"]
         Resource = "*"
       },
       {
         Effect = "Allow"
-        Action = [
-          "aoss:APIAccessAll"
-        ]
+        Action = ["aoss:APIAccessAll"]
         Resource = "*"
       },
       {
         Effect = "Allow"
-        Action = [
-          "dynamodb:Query",
-          "dynamodb:PutItem"
-        ]
+        Action = ["ssm:GetParameter"]
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
+      },
+      {
+        Effect = "Allow"
+        Action = ["sqs:SendMessage"]
+        Resource = var.ingest_dlq_arn
+      }
+    ]
+  })
+}
+
+# query Lambda IAMロール
+resource "aws_iam_role" "query" {
+  name = "${var.project_name}-lambda-query-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+# query Lambda IAMポリシー
+resource "aws_iam_role_policy" "query" {
+  name = "${var.project_name}-lambda-query-policy"
+  role = aws_iam_role.query.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = ["bedrock:InvokeModel"]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = ["aoss:APIAccessAll"]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = ["dynamodb:Query", "dynamodb:PutItem"]
         Resource = [
           "arn:aws:dynamodb:${var.aws_region}:*:table/${var.conversations_table_name}",
           "arn:aws:dynamodb:${var.aws_region}:*:table/${var.sessions_table_name}"
@@ -81,17 +119,39 @@ resource "aws_iam_role_policy" "lambda" {
       },
       {
         Effect = "Allow"
-        Action = [
-          "ssm:GetParameter"
-        ]
+        Action = ["ssm:GetParameter"]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
-      },
+      }
+    ]
+  })
+}
+
+# authorizer Lambda IAMロール
+resource "aws_iam_role" "authorizer" {
+  name = "${var.project_name}-lambda-authorizer-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+# authorizer Lambda IAMポリシー
+resource "aws_iam_role_policy" "authorizer" {
+  name = "${var.project_name}-lambda-authorizer-policy"
+  role = aws_iam_role.authorizer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
       {
         Effect = "Allow"
-        Action = [
-          "sqs:SendMessage"
-        ]
-        Resource = var.ingest_dlq_arn
+        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "arn:aws:logs:*:*:*"
       }
     ]
   })
@@ -101,7 +161,7 @@ resource "aws_iam_role_policy" "lambda" {
 resource "aws_lambda_function" "ingest" {
   filename         = data.archive_file.ingest.output_path
   function_name    = "${var.project_name}-ingest"
-  role             = aws_iam_role.lambda.arn
+  role             = aws_iam_role.ingest.arn
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 300
@@ -128,7 +188,7 @@ resource "aws_lambda_function" "ingest" {
 resource "aws_lambda_function" "query" {
   filename         = data.archive_file.query.output_path
   function_name    = "${var.project_name}-query"
-  role             = aws_iam_role.lambda.arn
+  role             = aws_iam_role.query.arn
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 60
@@ -153,7 +213,7 @@ resource "aws_lambda_function" "query" {
 resource "aws_lambda_function" "authorizer" {
   filename         = data.archive_file.authorizer.output_path
   function_name    = "${var.project_name}-authorizer"
-  role             = aws_iam_role.lambda.arn
+  role             = aws_iam_role.authorizer.arn
   handler          = "handler.handler"
   runtime          = "python3.12"
   timeout          = 30
