@@ -13,3 +13,8 @@ variable "frontend_bucket_arn" {
 variable "frontend_bucket_regional_domain_name" {
   type = string
 }
+
+variable "web_acl_arn" {
+  type        = string
+  description = "WAF WebACLのARN"
+}

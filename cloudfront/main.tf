@@ -15,6 +15,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
   default_root_object = "index.html"
   comment             = "${var.project_name} frontend"
+  web_acl_id          = var.web_acl_arn
 
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
