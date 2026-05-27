@@ -12,3 +12,8 @@ output "pdf_indexes_table_name" {
   value       = aws_dynamodb_table.pdf_indexes.name
   description = "PDFインデックス状態テーブル名"
 }
+
+output "pdf_indexes_table_arn" {
+  value       = aws_dynamodb_table.pdf_indexes.arn
+  description = "PDF indexes DynamoDBテーブルのARN"
+}
