@@ -16,3 +16,9 @@ variable "availability_zones" {
   type    = list(string)
   default = ["ap-northeast-1a", "ap-northeast-1c"]
 }
+
+variable "enable_vpc_endpoints" {
+  type        = bool
+  description = "インターフェース型VPCエンドポイントを作成するか"
+  default     = false
+}
