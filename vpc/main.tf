@@ -46,7 +46,7 @@ resource "aws_security_group" "vpc_endpoint" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
-    description = "VPC内からのHTTPS通信を許可"
+    description = "Allow HTTPS from within VPC"
   }
 
   egress {
@@ -54,7 +54,7 @@ resource "aws_security_group" "vpc_endpoint" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "全アウトバウンド通信を許可"
+    description = "Allow all outbound traffic"
   }
 
   tags = {
