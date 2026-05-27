@@ -38,7 +38,7 @@ resource "aws_route_table_association" "private" {
 # VPCエンドポイント用セキュリティグループ
 resource "aws_security_group" "vpc_endpoint" {
   name        = "${var.project_name}-vpc-endpoint-sg"
-  description = "VPCエンドポイント用セキュリティグループ"
+  description = "Security group for VPC endpoints"
   vpc_id      = aws_vpc.main.id
 
   ingress {
