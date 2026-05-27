@@ -53,3 +53,13 @@ variable "ingest_dlq_arn" {
   type        = string
   description = "ingest Lambda用DLQのARN"
 }
+
+variable "subnet_ids" {
+  type        = list(string)
+  description = "LambdaをデプロイするサブネットIDのリスト"
+}
+
+variable "lambda_security_group_id" {
+  type        = string
+  description = "Lambda用セキュリティグループID"
+}

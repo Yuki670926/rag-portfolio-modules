@@ -15,3 +15,8 @@ output "vpc_endpoint_security_group_id" {
   value       = aws_security_group.vpc_endpoint.id
   description = "VPCエンドポイント用セキュリティグループID"
 }
+
+output "lambda_security_group_id" {
+  value       = aws_security_group.lambda.id
+  description = "Lambda用セキュリティグループID"
+}

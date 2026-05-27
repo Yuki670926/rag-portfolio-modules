@@ -67,6 +67,15 @@ resource "aws_iam_role_policy" "ingest" {
         Effect = "Allow"
         Action = ["sqs:SendMessage"]
         Resource = var.ingest_dlq_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:CreateNetworkInterface",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DeleteNetworkInterface"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -121,6 +130,15 @@ resource "aws_iam_role_policy" "query" {
         Effect = "Allow"
         Action = ["ssm:GetParameter"]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:CreateNetworkInterface",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DeleteNetworkInterface"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -169,11 +187,12 @@ resource "aws_lambda_function" "ingest" {
   source_code_hash = data.archive_file.ingest.output_base64sha256
 
   environment {
-  variables = {
-    VECTOR_STORE_TYPE  = var.vector_store_type
-    SSM_ENDPOINT_PARAM = "/rp/${var.environment}/vector-store/endpoint"
+    variables = {
+      VECTOR_STORE_TYPE  = var.vector_store_type
+      SSM_ENDPOINT_PARAM = "/rp/${var.environment}/vector-store/endpoint"
+    }
+
   }
-}
 
   tags = {
     Name = "${var.project_name}-ingest"
@@ -181,6 +200,11 @@ resource "aws_lambda_function" "ingest" {
 
   dead_letter_config {
     target_arn = var.ingest_dlq_arn
+  }
+
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [var.lambda_security_group_id]
   }
 }
 
@@ -206,6 +230,11 @@ resource "aws_lambda_function" "query" {
 
   tags = {
     Name = "${var.project_name}-query"
+  }
+
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [var.lambda_security_group_id]
   }
 }
 
