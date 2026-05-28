@@ -3,6 +3,6 @@ output "budget_name" {
 }
 
 output "alert_email" {
-  value     = jsondecode(data.aws_secretsmanager_secret_version.alert_email.secret_string)["email"]
+  value     = nonsensitive(jsondecode(ephemeral.aws_secretsmanager_secret_version.alert_email.secret_string)["email"])
   sensitive = true
 }
