@@ -135,7 +135,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "access_logs" {
   }
 }
 
-# ライフサイクルポリシー（90日で削除）
+# ライフサイクルポリシー（365日で削除）
 resource "aws_s3_bucket_lifecycle_configuration" "access_logs" {
   bucket = aws_s3_bucket.access_logs.id
 
@@ -146,7 +146,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs" {
     filter {}
 
     expiration {
-      days = 90
+      days = 365
     }
   }
 }
