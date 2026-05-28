@@ -117,7 +117,7 @@ resource "aws_api_gateway_stage" "main" {
   stage_name    = var.stage_name
 
   tags = {
-    Name = "${var.project_name}-${var.stage_name}-stage"
+    Name = "${var.project_name}-stage"
   }
 }
 
