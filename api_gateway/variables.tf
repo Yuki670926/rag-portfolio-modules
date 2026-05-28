@@ -38,3 +38,9 @@ variable "authorizer_lambda_arn" {
   type        = string
   description = "Lambda AuthorizerのARN"
 }
+
+variable "stage_name" {
+  type        = string
+  description = "API Gatewayのステージ名"
+  default     = "prod"
+}

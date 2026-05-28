@@ -114,10 +114,10 @@ resource "aws_api_gateway_deployment" "main" {
 resource "aws_api_gateway_stage" "main" {
   deployment_id = aws_api_gateway_deployment.main.id
   rest_api_id   = aws_api_gateway_rest_api.main.id
-  stage_name    = "prod"
+  stage_name    = var.stage_name
 
   tags = {
-    Name = "${var.project_name}-stage"
+    Name = "${var.project_name}-${var.stage_name}-stage"
   }
 }
 
@@ -204,4 +204,16 @@ resource "aws_lambda_permission" "api_gateway_authorizer" {
   function_name = var.authorizer_lambda_arn
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/authorizers/*"
+}
+
+# APIステージのスロットリング設定
+resource "aws_api_gateway_method_settings" "main" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  stage_name  = aws_api_gateway_stage.main.stage_name
+  method_path = "*/*"
+
+  settings {
+    throttling_rate_limit  = 100
+    throttling_burst_limit = 200
+  }
 }
