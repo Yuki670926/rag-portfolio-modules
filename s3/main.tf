@@ -103,3 +103,64 @@ resource "aws_s3_object" "config" {
     DOCUMENTS_BUCKET = "${var.project_name}-documents-${var.account_id}"
   })
 }
+
+# アクセスログ保存用バケット
+resource "aws_s3_bucket" "access_logs" {
+  bucket = "${var.project_name}-access-logs-${var.account_id}"
+
+  tags = {
+    Name = "${var.project_name}-access-logs"
+  }
+}
+
+# パブリックアクセスブロック
+resource "aws_s3_bucket_public_access_block" "access_logs" {
+  bucket                  = aws_s3_bucket.access_logs.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# KMS暗号化
+resource "aws_s3_bucket_server_side_encryption_configuration" "access_logs" {
+  bucket = aws_s3_bucket.access_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = var.kms_key_arn
+    }
+    bucket_key_enabled = true
+  }
+}
+
+# ライフサイクルポリシー（90日で削除）
+resource "aws_s3_bucket_lifecycle_configuration" "access_logs" {
+  bucket = aws_s3_bucket.access_logs.id
+
+  rule {
+    id     = "access-logs-retention"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 90
+    }
+  }
+}
+
+# documentsバケットのアクセスログ設定
+resource "aws_s3_bucket_logging" "documents" {
+  bucket        = aws_s3_bucket.documents.id
+  target_bucket = aws_s3_bucket.access_logs.id
+  target_prefix = "documents/"
+}
+
+# frontendバケットのアクセスログ設定
+resource "aws_s3_bucket_logging" "frontend" {
+  bucket        = aws_s3_bucket.frontend.id
+  target_bucket = aws_s3_bucket.access_logs.id
+  target_prefix = "frontend/"
+}
