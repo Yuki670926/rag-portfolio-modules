@@ -87,3 +87,19 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
     bucket_key_enabled = true
   }
 }
+
+# フロントエンド設定ファイル
+resource "aws_s3_object" "config" {
+  bucket        = aws_s3_bucket.frontend.id
+  key           = "config.json"
+  content_type  = "application/json"
+  cache_control = "no-cache, no-store, must-revalidate"
+
+  content = jsonencode({
+    API_URL          = var.api_url
+    USER_POOL_ID     = var.user_pool_id
+    CLIENT_ID        = var.client_id
+    REGION           = var.aws_region
+    DOCUMENTS_BUCKET = "${var.project_name}-documents-${var.account_id}"
+  })
+}

@@ -20,3 +20,24 @@ variable "kms_key_arn" {
   type        = string
   description = "S3用KMSキーのARN"
 }
+
+variable "api_url" {
+  type        = string
+  description = "API GatewayのエンドポイントURL"
+}
+
+variable "user_pool_id" {
+  type        = string
+  description = "CognitoユーザープールID"
+}
+
+variable "client_id" {
+  type        = string
+  description = "CognitoクライアントID"
+}
+
+variable "aws_region" {
+  type        = string
+  description = "AWSリージョン"
+  default     = "ap-northeast-1"
+}

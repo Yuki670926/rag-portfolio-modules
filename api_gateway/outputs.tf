@@ -21,3 +21,8 @@ output "execution_arn" {
 output "lambda_authorizer_id" {
   value = aws_api_gateway_authorizer.lambda.id
 }
+
+output "api_url" {
+  value       = aws_api_gateway_stage.main.invoke_url
+  description = "API GatewayのベースURL"
+}

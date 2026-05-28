@@ -44,3 +44,4 @@ variable "stage_name" {
   description = "API Gatewayのステージ名"
   default     = "prod"
 }
+
