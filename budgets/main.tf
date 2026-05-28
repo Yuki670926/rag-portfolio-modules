@@ -28,7 +28,7 @@ resource "aws_budgets_budget" "monthly" {
     threshold                  = 80
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = [nonsensitive(jsondecode(ephemeral.aws_secretsmanager_secret_version.alert_email.secret_string)["email"])]
+    subscriber_email_addresses = [jsondecode(data.aws_secretsmanager_secret_version.alert_email.secret_string)["email"]]
   }
 
   notification {
@@ -36,6 +36,6 @@ resource "aws_budgets_budget" "monthly" {
     threshold                  = 100
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = [nonsensitive(jsondecode(ephemeral.aws_secretsmanager_secret_version.alert_email.secret_string)["email"])]
+    subscriber_email_addresses = [jsondecode(data.aws_secretsmanager_secret_version.alert_email.secret_string)["email"]]
   }
 }
