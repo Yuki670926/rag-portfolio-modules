@@ -7,9 +7,13 @@ terraform {
   }
 }
 
-# ephemeral resourceでtfstateに保存しない
-ephemeral "aws_secretsmanager_secret_version" "alert_email" {
-  secret_id = "rp-${var.environment}-alert-email"
+# main.tf
+data "aws_secretsmanager_secret" "alert_email" {
+  name = "rp-${var.environment}-alert-email"
+}
+
+data "aws_secretsmanager_secret_version" "alert_email" {
+  secret_id = data.aws_secretsmanager_secret.alert_email.id
 }
 
 resource "aws_budgets_budget" "monthly" {
