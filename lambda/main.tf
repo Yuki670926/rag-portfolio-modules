@@ -76,9 +76,18 @@ resource "aws_iam_role_policy" "ingest" {
           "ec2:DeleteNetworkInterface"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "xray:PutTraceSegments",
+          "xray:PutTelemetryRecords"
+        ]
+        Resource = "*"
       }
     ]
-  })
+    }
+  )
 }
 
 # query Lambda IAMロール
@@ -137,6 +146,14 @@ resource "aws_iam_role_policy" "query" {
           "ec2:CreateNetworkInterface",
           "ec2:DescribeNetworkInterfaces",
           "ec2:DeleteNetworkInterface"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "xray:PutTraceSegments",
+          "xray:PutTelemetryRecords"
         ]
         Resource = "*"
       }
@@ -211,6 +228,10 @@ resource "aws_lambda_function" "ingest" {
     security_group_ids = [var.lambda_security_group_id]
   }
 
+  tracing_config {
+    mode = "Active"
+  }
+
 }
 
 # query Lambda
@@ -245,6 +266,11 @@ resource "aws_lambda_function" "query" {
     subnet_ids         = var.subnet_ids
     security_group_ids = [var.lambda_security_group_id]
   }
+
+  tracing_config {
+    mode = "Active"
+  }
+
 }
 
 # authorizer Lambda
