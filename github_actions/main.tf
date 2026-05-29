@@ -51,19 +51,19 @@ resource "aws_iam_role_policy_attachment" "github_actions" {
 
 # GitHub Secretsを自動設定
 resource "github_actions_secret" "aws_role_arn" {
-  repository      = var.github_repo
-  secret_name     = "AWS_ROLE_ARN"
-  value = aws_iam_role.github_actions.arn
+  repository  = var.github_repo
+  secret_name = "AWS_ROLE_ARN"
+  value       = aws_iam_role.github_actions.arn
 }
 
 resource "github_actions_secret" "frontend_bucket" {
-  repository      = var.github_repo
-  secret_name     = "FRONTEND_BUCKET"
-  value = aws_iam_role.github_actions.arn
+  repository  = var.github_repo
+  secret_name = "FRONTEND_BUCKET"
+  value       = var.frontend_bucket_name
 }
 
 resource "github_actions_secret" "cf_distribution_id" {
-  repository      = var.github_repo
-  secret_name     = "CF_DISTRIBUTION_ID"
-  value = aws_iam_role.github_actions.arn
+  repository  = var.github_repo
+  secret_name = "CF_DISTRIBUTION_ID"
+  value       = var.cf_distribution_id
 }
