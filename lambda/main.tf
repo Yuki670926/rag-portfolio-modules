@@ -39,33 +39,33 @@ resource "aws_iam_role_policy" "ingest" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:*:*:*"
       },
       {
-        Effect = "Allow"
-        Action = ["s3:GetObject"]
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
         Resource = "${var.documents_bucket_arn}/*"
       },
       {
-        Effect = "Allow"
-        Action = ["bedrock:InvokeModel"]
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel"]
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = ["aoss:APIAccessAll"]
+        Effect   = "Allow"
+        Action   = ["aoss:APIAccessAll"]
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = ["ssm:GetParameter"]
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
       },
       {
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
         Resource = var.ingest_dlq_arn
       },
       {
@@ -104,18 +104,18 @@ resource "aws_iam_role_policy" "query" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:*:*:*"
       },
       {
-        Effect = "Allow"
-        Action = ["bedrock:InvokeModel"]
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel"]
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = ["aoss:APIAccessAll"]
+        Effect   = "Allow"
+        Action   = ["aoss:APIAccessAll"]
         Resource = "*"
       },
       {
@@ -127,8 +127,8 @@ resource "aws_iam_role_policy" "query" {
         ]
       },
       {
-        Effect = "Allow"
-        Action = ["ssm:GetParameter"]
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
       },
       {
@@ -167,8 +167,8 @@ resource "aws_iam_role_policy" "authorizer" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:*:*:*"
       }
     ]
@@ -185,11 +185,15 @@ resource "aws_lambda_function" "ingest" {
   timeout          = 300
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.ingest.output_base64sha256
+  layers           = ["arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312:7"]
 
   environment {
     variables = {
-      VECTOR_STORE_TYPE  = var.vector_store_type
-      SSM_ENDPOINT_PARAM = "/rp/${var.environment}/vector-store/endpoint"
+      VECTOR_STORE_TYPE            = var.vector_store_type
+      SSM_ENDPOINT_PARAM           = "/rp/${var.environment}/vector-store/endpoint"
+      POWERTOOLS_SERVICE_NAME      = "${var.project_name}-ingest"
+      POWERTOOLS_LOG_LEVEL         = "INFO"
+      POWERTOOLS_METRICS_NAMESPACE = "RagPortfolio"
     }
 
   }
@@ -206,6 +210,7 @@ resource "aws_lambda_function" "ingest" {
     subnet_ids         = var.subnet_ids
     security_group_ids = [var.lambda_security_group_id]
   }
+
 }
 
 # query Lambda
@@ -218,15 +223,19 @@ resource "aws_lambda_function" "query" {
   timeout          = 60
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.query.output_base64sha256
+  layers           = ["arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312:7"]
 
   environment {
-  variables = {
-    VECTOR_STORE_TYPE    = var.vector_store_type
-    SSM_ENDPOINT_PARAM   = "/rp/${var.environment}/vector-store/endpoint"
-    CONVERSATIONS_TABLE  = var.conversations_table_name
-    SESSIONS_TABLE       = var.sessions_table_name
+    variables = {
+      VECTOR_STORE_TYPE            = var.vector_store_type
+      SSM_ENDPOINT_PARAM           = "/rp/${var.environment}/vector-store/endpoint"
+      CONVERSATIONS_TABLE          = var.conversations_table_name
+      SESSIONS_TABLE               = var.sessions_table_name
+      POWERTOOLS_SERVICE_NAME      = "${var.project_name}-query"
+      POWERTOOLS_LOG_LEVEL         = "INFO"
+      POWERTOOLS_METRICS_NAMESPACE = "RagPortfolio"
+    }
   }
-}
 
   tags = {
     Name = "${var.project_name}-query"
@@ -247,13 +256,17 @@ resource "aws_lambda_function" "authorizer" {
   runtime          = "python3.12"
   timeout          = 30
   source_code_hash = data.archive_file.authorizer.output_base64sha256
+  layers           = ["arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312:7"]
 
   environment {
     variables = {
-      REGION        = var.aws_region
-      USER_POOL_ID  = var.cognito_user_pool_id
-      APP_CLIENT_ID = var.cognito_client_id
-      ALLOWED_GROUP = "Admin"
+      REGION                       = var.aws_region
+      USER_POOL_ID                 = var.cognito_user_pool_id
+      APP_CLIENT_ID                = var.cognito_client_id
+      ALLOWED_GROUP                = "Admin"
+      POWERTOOLS_SERVICE_NAME      = "${var.project_name}-authorizer"
+      POWERTOOLS_LOG_LEVEL         = "INFO"
+      POWERTOOLS_METRICS_NAMESPACE = "RagPortfolio"
     }
   }
 
