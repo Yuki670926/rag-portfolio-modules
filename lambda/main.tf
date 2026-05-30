@@ -1,3 +1,13 @@
+# ------------------------------------------------------------
+# 共通ローカル値
+#   Lambda Powertools Layer ARN を3関数(ingest/query/authorizer)で一元管理する。
+#   命名規則: AWSLambdaPowertoolsPythonV3-{python_version}-{arch}:{version}
+#   V3からアーキテクチャsuffix(-x86_64)が必須。:19 はライブラリ v3.16.0 に対応。
+# ------------------------------------------------------------
+locals {
+  powertools_layer_arn = "arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312-x86_64:19"
+}
+
 data "archive_file" "ingest" {
   type        = "zip"
   source_dir  = "${path.root}/../lambda/ingest"
@@ -202,7 +212,7 @@ resource "aws_lambda_function" "ingest" {
   timeout          = 300
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.ingest.output_base64sha256
-  layers           = ["arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312:7"]
+  layers           = [local.powertools_layer_arn]
 
   environment {
     variables = {
@@ -244,7 +254,7 @@ resource "aws_lambda_function" "query" {
   timeout          = 60
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.query.output_base64sha256
-  layers           = ["arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312:7"]
+  layers           = [local.powertools_layer_arn]
 
   environment {
     variables = {
@@ -282,7 +292,7 @@ resource "aws_lambda_function" "authorizer" {
   runtime          = "python3.12"
   timeout          = 30
   source_code_hash = data.archive_file.authorizer.output_base64sha256
-  layers           = ["arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312:7"]
+  layers           = [local.powertools_layer_arn]
 
   environment {
     variables = {
