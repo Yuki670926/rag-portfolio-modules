@@ -9,6 +9,6 @@ output "vector_bucket_name" {
 }
 
 output "vector_index_arn" {
-  value       = aws_s3vectors_index.main.arn
+  value       = aws_s3vectors_index.main.index_arn
   description = "S3 Vector IndexのARN（Bedrock KBのstorage_configurationで使用）"
 }

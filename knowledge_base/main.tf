@@ -133,7 +133,8 @@ resource "aws_bedrockagent_knowledge_base" "main" {
   storage_configuration {
     type = "S3_VECTORS"
     s3_vectors_configuration {
-      vector_index_arn = var.vector_index_arn
+      index_arn         = var.vector_index_arn
+      vector_bucket_arn = var.vector_bucket_arn
     }
   }
 
@@ -157,7 +158,7 @@ resource "aws_bedrockagent_data_source" "main" {
     chunking_configuration {
       chunking_strategy = "SEMANTIC"
       semantic_chunking_configuration {
-        max_tokens                      = 300
+        max_token                       = 300
         buffer_size                     = 0
         breakpoint_percentile_threshold = 95
       }
