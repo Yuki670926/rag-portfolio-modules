@@ -1,4 +1,4 @@
-﻿output "ingest_lambda_arn" {
+output "ingest_lambda_arn" {
   value       = aws_lambda_function.ingest.arn
   description = "ingest LambdaのARN"
 }

@@ -65,6 +65,11 @@ resource "aws_iam_role_policy" "ingest" {
       },
       {
         Effect   = "Allow"
+        Action   = ["bedrock:StartIngestionJob"]
+        Resource = var.knowledge_base_arn
+      },
+      {
+        Effect   = "Allow"
         Action   = ["aoss:APIAccessAll"]
         Resource = "*"
       },
@@ -131,6 +136,11 @@ resource "aws_iam_role_policy" "query" {
         Effect   = "Allow"
         Action   = ["bedrock:InvokeModel"]
         Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["bedrock:Retrieve"]
+        Resource = var.knowledge_base_arn
       },
       {
         Effect   = "Allow"
@@ -221,6 +231,8 @@ resource "aws_lambda_function" "ingest" {
       POWERTOOLS_SERVICE_NAME      = "${var.project_name}-ingest"
       POWERTOOLS_LOG_LEVEL         = "INFO"
       POWERTOOLS_METRICS_NAMESPACE = "RagPortfolio"
+      KNOWLEDGE_BASE_ID            = var.knowledge_base_id
+      DATA_SOURCE_ID               = var.data_source_id
     }
 
   }
@@ -265,6 +277,7 @@ resource "aws_lambda_function" "query" {
       POWERTOOLS_SERVICE_NAME      = "${var.project_name}-query"
       POWERTOOLS_LOG_LEVEL         = "INFO"
       POWERTOOLS_METRICS_NAMESPACE = "RagPortfolio"
+      KNOWLEDGE_BASE_ID            = var.knowledge_base_id
     }
   }
 

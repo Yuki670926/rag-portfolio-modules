@@ -63,3 +63,21 @@ variable "lambda_security_group_id" {
   type        = string
   description = "Lambda用セキュリティグループID"
 }
+
+variable "knowledge_base_id" {
+  type        = string
+  description = "Bedrock Knowledge BaseのID（s3_vectors時のみ。opensearch時は空文字）"
+  default     = ""
+}
+
+variable "data_source_id" {
+  type        = string
+  description = "Bedrock KB データソースのID（ingestのStartIngestionJob用）"
+  default     = ""
+}
+
+variable "knowledge_base_arn" {
+  type        = string
+  description = "Bedrock Knowledge BaseのARN（KB操作のIAM権限を絞るため）"
+  default     = "*"
+}
