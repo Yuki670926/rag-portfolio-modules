@@ -7,6 +7,20 @@ terraform {
   }
 }
 
+# アラーム通知用SNSトピック（OpenSearch構成に依存しない独立トピック）
+resource "aws_sns_topic" "alarm_notification" {
+  name = "${var.project_name}-alarm-notification"
+  tags = {
+    Name = "${var.project_name}-alarm-notification"
+  }
+}
+
+resource "aws_sns_topic_subscription" "alarm_email" {
+  topic_arn = aws_sns_topic.alarm_notification.arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}
+
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "${var.project_name}-dashboard"
 
@@ -95,7 +109,7 @@ resource "aws_cloudwatch_metric_alarm" "ingest_errors" {
   statistic           = "Sum"
   threshold           = 1
   alarm_description   = "ingest Lambdaでエラーが発生しました"
-  alarm_actions       = [var.sns_topic_arn]
+  alarm_actions       = [aws_sns_topic.alarm_notification.arn]
 
   dimensions = {
     FunctionName = "${var.project_name}-ingest"
@@ -113,7 +127,7 @@ resource "aws_cloudwatch_metric_alarm" "opensearch_start_errors" {
   statistic           = "Sum"
   threshold           = 1
   alarm_description   = "opensearch-start Lambdaでエラーが発生しました"
-  alarm_actions       = [var.sns_topic_arn]
+  alarm_actions       = [aws_sns_topic.alarm_notification.arn]
 
   dimensions = {
     FunctionName = "${var.project_name}-opensearch-start"
@@ -131,7 +145,7 @@ resource "aws_cloudwatch_metric_alarm" "opensearch_stop_errors" {
   statistic           = "Sum"
   threshold           = 1
   alarm_description   = "opensearch-stop Lambdaでエラーが発生しました"
-  alarm_actions       = [var.sns_topic_arn]
+  alarm_actions       = [aws_sns_topic.alarm_notification.arn]
 
   dimensions = {
     FunctionName = "${var.project_name}-opensearch-stop"

@@ -8,7 +8,7 @@ variable "aws_region" {
   default     = "ap-northeast-1"
 }
 
-variable "sns_topic_arn" {
+variable "alert_email" {
   type        = string
-  description = "SNSトピックARN（アラート通知用）"
+  description = "アラーム通知先メールアドレス"
 }
