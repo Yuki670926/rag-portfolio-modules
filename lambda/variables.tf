@@ -87,3 +87,9 @@ variable "enable_private_networking" {
   description = "LambdaをVPC内に配置するか（プライベートネットワーキング有効化時。VPCエンドポイント経由でbedrock等へプライベート通信）"
   default     = false
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "DynamoDB等の暗号化に使うKMSキーのARN（query LambdaがKMS暗号化テーブルを読み書きするため）"
+  default     = ""
+}

@@ -157,6 +157,11 @@ resource "aws_iam_role_policy" "query" {
       },
       {
         Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey"]
+        Resource = var.kms_key_arn
+      },
+      {
+        Effect   = "Allow"
         Action   = ["ssm:GetParameter"]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/rp/*"
       },
