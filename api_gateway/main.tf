@@ -1,4 +1,4 @@
-﻿resource "aws_api_gateway_rest_api" "main" {
+resource "aws_api_gateway_rest_api" "main" {
   name        = "${var.project_name}-api"
   description = "RAG Portfolio API"
 
@@ -140,6 +140,10 @@ resource "aws_api_gateway_gateway_response" "cors_4xx" {
     "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
     "gatewayresponse.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
   }
+
+  response_templates = {
+    "application/json" = "{\"message\":$context.error.messageString}"
+  }
 }
 
 resource "aws_api_gateway_gateway_response" "cors_5xx" {
@@ -150,6 +154,10 @@ resource "aws_api_gateway_gateway_response" "cors_5xx" {
     "gatewayresponse.header.Access-Control-Allow-Origin"  = "'https://${var.cloudfront_domain}'"
     "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
     "gatewayresponse.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+  }
+
+  response_templates = {
+    "application/json" = "{\"message\":$context.error.messageString}"
   }
 }
 
