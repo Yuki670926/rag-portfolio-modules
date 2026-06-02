@@ -45,3 +45,68 @@ resource "aws_iam_role_policy_attachment" "github_actions" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
+# ===== Frontend デプロイ専用ロール（最小権限） =====
+# deploy-frontend.yml 用。S3同期 + CloudFront invalidation のみ許可。
+# 信頼条件は main ブランチからのデプロイに限定（apply用ロールより厳格）。
+resource "aws_iam_role" "frontend_deploy" {
+  name = "${var.project_name}-frontend-deploy-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.github.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringLike = {
+          "token.actions.githubusercontent.com:sub" = "repo:${var.github_username}/${var.github_repo}:ref:refs/heads/main"
+        }
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+}
+
+# Frontend デプロイの最小権限ポリシー
+resource "aws_iam_role_policy" "frontend_deploy" {
+  name = "${var.project_name}-frontend-deploy-policy"
+  role = aws_iam_role.frontend_deploy.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        # S3: フロントバケットへの同期（sync --delete）
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          var.frontend_bucket_arn,
+          "${var.frontend_bucket_arn}/*"
+        ]
+      },
+      {
+        # KMS: SSE-KMS暗号化バケットへのPut/読み取り
+        Effect = "Allow"
+        Action = [
+          "kms:GenerateDataKey",
+          "kms:Decrypt"
+        ]
+        Resource = var.s3_kms_key_arn
+      },
+      {
+        # CloudFront: キャッシュ無効化
+        Effect   = "Allow"
+        Action   = ["cloudfront:CreateInvalidation"]
+        Resource = var.cloudfront_distribution_arn
+      }
+    ]
+  })
+}
