@@ -12,3 +12,8 @@ variable "vector_store_endpoint" {
   type        = string
   description = "ベクトルストアのエンドポイント"
 }
+
+variable "vector_store_type" {
+  type        = string
+  description = "ベクトルストアの種類（opensearch時のみエンドポイントパラメータを作成）"
+}
