@@ -88,7 +88,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
 
 # Bedrock インターフェースエンドポイント
 resource "aws_vpc_endpoint" "bedrock" {
-  count               = var.enable_vpc_endpoints ? 1 : 0
+  count               = var.enable_private_networking ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.bedrock-runtime"
   vpc_endpoint_type   = "Interface"
@@ -103,7 +103,7 @@ resource "aws_vpc_endpoint" "bedrock" {
 
 # SQS インターフェースエンドポイント
 resource "aws_vpc_endpoint" "sqs" {
-  count               = var.enable_vpc_endpoints ? 1 : 0
+  count               = var.enable_private_networking ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.sqs"
   vpc_endpoint_type   = "Interface"
@@ -113,6 +113,34 @@ resource "aws_vpc_endpoint" "sqs" {
 
   tags = {
     Name = "${var.project_name}-sqs-endpoint"
+  }
+}
+
+# Bedrock Agent インターフェースエンドポイント（KBのStartIngestionJob用）
+resource "aws_vpc_endpoint" "bedrock_agent" {
+  count               = var.enable_private_networking ? 1 : 0
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.ap-northeast-1.bedrock-agent"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoint.id]
+  private_dns_enabled = true
+  tags = {
+    Name = "${var.project_name}-bedrock-agent-endpoint"
+  }
+}
+
+# Bedrock Agent Runtime インターフェースエンドポイント（KBのRetrieve用）
+resource "aws_vpc_endpoint" "bedrock_agent_runtime" {
+  count               = var.enable_private_networking ? 1 : 0
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.ap-northeast-1.bedrock-agent-runtime"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoint.id]
+  private_dns_enabled = true
+  tags = {
+    Name = "${var.project_name}-bedrock-agent-runtime-endpoint"
   }
 }
 

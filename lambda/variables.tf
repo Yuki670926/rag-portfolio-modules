@@ -81,3 +81,9 @@ variable "knowledge_base_arn" {
   description = "Bedrock Knowledge BaseのARN（KB操作のIAM権限を絞るため）"
   default     = "*"
 }
+
+variable "enable_private_networking" {
+  type        = bool
+  description = "LambdaをVPC内に配置するか（プライベートネットワーキング有効化時。VPCエンドポイント経由でbedrock等へプライベート通信）"
+  default     = false
+}

@@ -245,9 +245,12 @@ resource "aws_lambda_function" "ingest" {
     target_arn = var.ingest_dlq_arn
   }
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [var.lambda_security_group_id]
+  dynamic "vpc_config" {
+    for_each = var.enable_private_networking ? [1] : []
+    content {
+      subnet_ids         = var.subnet_ids
+      security_group_ids = [var.lambda_security_group_id]
+    }
   }
 
   tracing_config {
@@ -285,9 +288,12 @@ resource "aws_lambda_function" "query" {
     Name = "${var.project_name}-query"
   }
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [var.lambda_security_group_id]
+  dynamic "vpc_config" {
+    for_each = var.enable_private_networking ? [1] : []
+    content {
+      subnet_ids         = var.subnet_ids
+      security_group_ids = [var.lambda_security_group_id]
+    }
   }
 
   tracing_config {

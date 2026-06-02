@@ -1,5 +1,5 @@
 variable "project_name" {
-  type    = string
+  type = string
 }
 
 variable "vpc_cidr" {
@@ -17,8 +17,8 @@ variable "availability_zones" {
   default = ["ap-northeast-1a", "ap-northeast-1c"]
 }
 
-variable "enable_vpc_endpoints" {
+variable "enable_private_networking" {
   type        = bool
-  description = "インターフェース型VPCエンドポイントを作成するか"
+  description = "プライベートネットワーキングを有効化する（LambdaのVPC配置＋VPCエンドポイント経由のプライベート通信）。層3の経路隔離。"
   default     = false
 }
