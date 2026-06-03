@@ -307,6 +307,22 @@ resource "aws_lambda_function" "query" {
 
 }
 
+# authorizer Layer (python-jose + cryptography)
+# Docker(Lambda公式イメージ)でビルドした Lambda互換バイナリを Layer 化。
+# build/python/ 構造を保つため source_dir は build/ を指す。
+data "archive_file" "authorizer_layer" {
+  type        = "zip"
+  source_dir  = "${path.root}/../layers/authorizer/build"
+  output_path = "${path.root}/../layers/authorizer/authorizer_layer.zip"
+}
+
+resource "aws_lambda_layer_version" "authorizer" {
+  layer_name          = "${var.project_name}-authorizer-deps"
+  filename            = data.archive_file.authorizer_layer.output_path
+  source_code_hash    = data.archive_file.authorizer_layer.output_base64sha256
+  compatible_runtimes = ["python3.12"]
+}
+
 # authorizer Lambda
 resource "aws_lambda_function" "authorizer" {
   filename         = data.archive_file.authorizer.output_path
@@ -316,7 +332,7 @@ resource "aws_lambda_function" "authorizer" {
   runtime          = "python3.12"
   timeout          = 30
   source_code_hash = data.archive_file.authorizer.output_base64sha256
-  layers           = [local.powertools_layer_arn]
+  layers           = [local.powertools_layer_arn, aws_lambda_layer_version.authorizer.arn]
 
   environment {
     variables = {
@@ -333,6 +349,7 @@ resource "aws_lambda_function" "authorizer" {
   tags = {
     Name = "${var.project_name}-authorizer"
   }
+
 }
 
 # S3からLambdaを呼び出す権限
