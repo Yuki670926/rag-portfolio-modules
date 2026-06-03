@@ -217,6 +217,20 @@ resource "aws_iam_role_policy" "authorizer" {
   })
 }
 
+# ingest/query 共通 Layer (boto3新版 + opensearchpy + requests_aws4auth + pypdf)
+data "archive_file" "ingest_query_layer" {
+  type        = "zip"
+  source_dir  = "${path.root}/../layers/ingest-query/build"
+  output_path = "${path.root}/../layers/ingest-query/ingest_query_layer.zip"
+}
+
+resource "aws_lambda_layer_version" "ingest_query" {
+  layer_name          = "${var.project_name}-ingest-query-deps"
+  filename            = data.archive_file.ingest_query_layer.output_path
+  source_code_hash    = data.archive_file.ingest_query_layer.output_base64sha256
+  compatible_runtimes = ["python3.12"]
+}
+
 # ingest Lambda
 resource "aws_lambda_function" "ingest" {
   filename         = data.archive_file.ingest.output_path
@@ -227,7 +241,7 @@ resource "aws_lambda_function" "ingest" {
   timeout          = 300
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.ingest.output_base64sha256
-  layers           = [local.powertools_layer_arn]
+  layers           = [local.powertools_layer_arn, aws_lambda_layer_version.ingest_query.arn]
 
   environment {
     variables = {
@@ -274,7 +288,7 @@ resource "aws_lambda_function" "query" {
   timeout          = 60
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.query.output_base64sha256
-  layers           = [local.powertools_layer_arn]
+  layers           = [local.powertools_layer_arn, aws_lambda_layer_version.ingest_query.arn]
 
   environment {
     variables = {
