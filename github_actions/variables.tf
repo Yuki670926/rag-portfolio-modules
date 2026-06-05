@@ -24,3 +24,8 @@ variable "cloudfront_distribution_arn" {
   type        = string
   description = "CloudFront DistributionのARN（invalidation用）"
 }
+
+variable "environment" {
+  type        = string
+  description = "Deploy target environment (dev/stg/prod). Scopes the OIDC sub to repo:...:environment:<env>."
+}

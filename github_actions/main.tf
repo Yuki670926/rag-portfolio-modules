@@ -1,4 +1,4 @@
-terraform {
+﻿terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -30,7 +30,7 @@ resource "aws_iam_role" "github_actions" {
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_username}/${var.github_repo}:*"
+          "token.actions.githubusercontent.com:sub" = "repo:${var.github_username}/${var.github_repo}:environment:${var.environment}"
         }
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
