@@ -31,6 +31,11 @@ resource "aws_dynamodb_table" "conversations" {
     enabled     = true
     kms_key_arn = var.kms_key_arn
   }
+
+  # 正本データ保護（大単元21）：誤操作・誤上書きからの復旧用にPITRを有効化
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 
 resource "aws_dynamodb_table" "sessions" {
@@ -62,6 +67,11 @@ resource "aws_dynamodb_table" "sessions" {
     enabled     = true
     kms_key_arn = var.kms_key_arn
   }
+
+  # 正本データ保護（大単元21）：誤操作・誤上書きからの復旧用にPITRを有効化
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 
 resource "aws_dynamodb_table" "pdf_indexes" {
@@ -87,5 +97,10 @@ resource "aws_dynamodb_table" "pdf_indexes" {
   server_side_encryption {
     enabled     = true
     kms_key_arn = var.kms_key_arn
+  }
+
+  # 正本データ保護（大単元21）：誤操作・誤上書きからの復旧用にPITRを有効化
+  point_in_time_recovery {
+    enabled = true
   }
 }
