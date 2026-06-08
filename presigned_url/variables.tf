@@ -1,4 +1,4 @@
-﻿variable "project_name" {
+variable "project_name" {
   type = string
 }
 
@@ -42,4 +42,16 @@ variable "cloudfront_domain" {
 variable "kms_key_arn" {
   type        = string
   description = "S3用KMSキーのARN（SSE-KMS PUTの暗号化に必要）"
+}
+
+variable "pdf_indexes_table_name" {
+  type        = string
+  description = "GET /status が読む pdf_indexes テーブル名"
+  default     = ""
+}
+
+variable "pdf_indexes_table_arn" {
+  type        = string
+  description = "pdf_indexes テーブルの ARN（dynamodb:GetItem 用）"
+  default     = ""
 }

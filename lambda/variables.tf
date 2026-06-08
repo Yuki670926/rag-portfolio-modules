@@ -93,3 +93,15 @@ variable "kms_key_arn" {
   description = "DynamoDB等の暗号化に使うKMSキーのARN（query LambdaがKMS暗号化テーブルを読み書きするため）"
   default     = ""
 }
+
+variable "pdf_indexes_table_name" {
+  type        = string
+  description = "PDF索引化の準備完了フラグを記録する DynamoDB テーブル名（ingest が PutItem）"
+  default     = ""
+}
+
+variable "pdf_indexes_table_arn" {
+  type        = string
+  description = "pdf_indexes テーブルの ARN（ingest ロールの dynamodb:PutItem 用）"
+  default     = ""
+}

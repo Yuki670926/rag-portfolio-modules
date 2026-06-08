@@ -1,3 +1,3 @@
-﻿output "upload_api_endpoint" {
+output "upload_api_endpoint" {
   value = "/upload"
 }

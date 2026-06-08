@@ -45,3 +45,9 @@ variable "stage_name" {
   default     = "prod"
 }
 
+variable "deployment_revision" {
+  type        = string
+  description = "API GW 再デプロイ強制用リビジョン。別モジュールのルート追加時に root から bump する。"
+  default     = "1"
+}
+

@@ -1,4 +1,4 @@
-﻿data "archive_file" "presigned_url" {
+data "archive_file" "presigned_url" {
   type        = "zip"
   source_dir  = "${path.root}/../lambda/presigned_url"
   output_path = "${path.root}/../lambda/presigned_url.zip"
@@ -42,6 +42,13 @@ resource "aws_iam_role_policy" "presigned_url" {
         Effect   = "Allow"
         Action   = ["kms:GenerateDataKey", "kms:Decrypt"]
         Resource = var.kms_key_arn
+      },
+      {
+        # GET /status：索引化の準備完了を pdf_indexes から読む（GetItem のみ）。
+        # DynamoDB は同一 KMS 鍵で暗号化されており、復号は上の kms:Decrypt で賄える。
+        Effect   = "Allow"
+        Action   = ["dynamodb:GetItem"]
+        Resource = var.pdf_indexes_table_arn
       }
     ]
   })
@@ -58,7 +65,8 @@ resource "aws_lambda_function" "presigned_url" {
 
   environment {
     variables = {
-      DOCUMENTS_BUCKET = var.documents_bucket_name
+      DOCUMENTS_BUCKET  = var.documents_bucket_name
+      PDF_INDEXES_TABLE = var.pdf_indexes_table_name
     }
   }
 
@@ -130,6 +138,72 @@ resource "aws_api_gateway_integration_response" "upload_options" {
     "method.response.header.Access-Control-Allow-Origin"  = "'https://${var.cloudfront_domain}'"
   }
   depends_on = [aws_api_gateway_integration.upload_options]
+}
+
+# ---- GET /status?pdf=<filename>：索引化の準備完了照会（フロントの polling 用） ----
+resource "aws_api_gateway_resource" "status" {
+  rest_api_id = var.rest_api_id
+  parent_id   = var.root_resource_id
+  path_part   = "status"
+}
+
+resource "aws_api_gateway_method" "status_get" {
+  rest_api_id   = var.rest_api_id
+  resource_id   = aws_api_gateway_resource.status.id
+  http_method   = "GET"
+  authorization = "CUSTOM"
+  authorizer_id = var.lambda_authorizer_id
+}
+
+resource "aws_api_gateway_integration" "status_lambda" {
+  rest_api_id             = var.rest_api_id
+  resource_id             = aws_api_gateway_resource.status.id
+  http_method             = aws_api_gateway_method.status_get.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.presigned_url.invoke_arn
+}
+
+resource "aws_api_gateway_method" "status_options" {
+  rest_api_id   = var.rest_api_id
+  resource_id   = aws_api_gateway_resource.status.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "status_options" {
+  rest_api_id = var.rest_api_id
+  resource_id = aws_api_gateway_resource.status.id
+  http_method = aws_api_gateway_method.status_options.http_method
+  type        = "MOCK"
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "status_options" {
+  rest_api_id = var.rest_api_id
+  resource_id = aws_api_gateway_resource.status.id
+  http_method = aws_api_gateway_method.status_options.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "status_options" {
+  rest_api_id = var.rest_api_id
+  resource_id = aws_api_gateway_resource.status.id
+  http_method = aws_api_gateway_method.status_options.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'https://${var.cloudfront_domain}'"
+  }
+  depends_on = [aws_api_gateway_integration.status_options]
 }
 
 resource "aws_lambda_permission" "api_gateway_presigned" {

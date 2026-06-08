@@ -101,12 +101,18 @@ resource "aws_iam_role_policy" "ingest" {
         Resource = "*"
       },
       {
-        # documents バケットは SSE-KMS。アップロードされた PDF を GetObject で読む際、
-        # S3 が署名者(本ロール)の kms:Decrypt で復号する。これが無いと GetObject が
-        # AccessDenied になり、ingest が PDF を読めず索引化されない（retrieval が空になる）。
+        # documents バケットは SSE-KMS（PDF の GetObject 復号に kms:Decrypt）。
+        # pdf_indexes(DynamoDB) も同じ KMS 鍵で暗号化されており、PutItem には
+        # kms:GenerateDataKey も要る。両用途を1文で許可。
         Effect   = "Allow"
-        Action   = ["kms:Decrypt"]
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey"]
         Resource = var.kms_key_arn
+      },
+      {
+        # 索引化完了フラグの記録（フロントの準備完了 polling 用）。pdf_indexes へ PutItem のみ。
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem"]
+        Resource = var.pdf_indexes_table_arn
       }
     ]
     }
@@ -260,6 +266,7 @@ resource "aws_lambda_function" "ingest" {
       POWERTOOLS_METRICS_NAMESPACE = "RagPortfolio"
       KNOWLEDGE_BASE_ID            = var.knowledge_base_id
       DATA_SOURCE_ID               = var.data_source_id
+      PDF_INDEXES_TABLE            = var.pdf_indexes_table_name
     }
 
   }

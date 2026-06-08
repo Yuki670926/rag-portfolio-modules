@@ -90,12 +90,16 @@ resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
 
   triggers = {
+    # presigned_url モジュールのルート(/upload,/status)は別モジュールで定義され、
+    # ここ(api_gateway)の deployment 依存に含められない（presigned が本モジュールに依存＝循環回避）。
+    # そのため新ルート追加時は root から var.deployment_revision を bump して再デプロイを強制する。
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.query.id,
       aws_api_gateway_method.query_post.id,
       aws_api_gateway_integration.query_lambda.id,
       aws_api_gateway_gateway_response.cors_4xx.id,
       aws_api_gateway_gateway_response.cors_5xx.id,
+      var.deployment_revision,
     ]))
   }
 
