@@ -35,6 +35,13 @@ resource "aws_iam_role_policy" "presigned_url" {
         Effect   = "Allow"
         Action   = ["s3:PutObject"]
         Resource = "${var.documents_bucket_arn}/*"
+      },
+      {
+        # SSE-KMS の documents へ PUT する際、S3 が暗号化のため KMS を呼ぶ。
+        # presigned URL の署名者（本ロール）の権限で評価されるため、対象キーへの権限が必要。
+        Effect   = "Allow"
+        Action   = ["kms:GenerateDataKey", "kms:Decrypt"]
+        Resource = var.kms_key_arn
       }
     ]
   })

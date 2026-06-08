@@ -37,3 +37,9 @@ variable "cloudfront_domain" {
   type        = string
   description = "CloudFrontのドメイン名"
 }
+
+# S3用KMSキーARN（SSE-KMSのdocumentsへPUTする際、暗号化のためにkms:GenerateDataKeyが要る）
+variable "kms_key_arn" {
+  type        = string
+  description = "S3用KMSキーのARN（SSE-KMS PUTの暗号化に必要）"
+}
