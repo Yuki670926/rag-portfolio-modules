@@ -99,6 +99,14 @@ resource "aws_iam_role_policy" "ingest" {
           "xray:PutTelemetryRecords"
         ]
         Resource = "*"
+      },
+      {
+        # documents バケットは SSE-KMS。アップロードされた PDF を GetObject で読む際、
+        # S3 が署名者(本ロール)の kms:Decrypt で復号する。これが無いと GetObject が
+        # AccessDenied になり、ingest が PDF を読めず索引化されない（retrieval が空になる）。
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt"]
+        Resource = var.kms_key_arn
       }
     ]
     }
