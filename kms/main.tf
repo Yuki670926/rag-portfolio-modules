@@ -44,6 +44,23 @@ resource "aws_kms_key" "s3" {
             "aws:SourceAccount" = var.account_id
           }
         }
+      },
+      {
+        # CloudFront(OAC) が SSE-KMS のフロントオブジェクトを復号するために必要。
+        # OAC のバケットポリシー許可だけでは不足で、KMS キーポリシーにも CloudFront を足さないと 403 になる。
+        # モジュール循環(kms→cloudfront→s3→kms)回避のため SourceArn でなく SourceAccount で account にスコープ。
+        Sid    = "Allow CloudFront Decrypt"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = ["kms:Decrypt"]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = var.account_id
+          }
+        }
       }
     ]
   })
