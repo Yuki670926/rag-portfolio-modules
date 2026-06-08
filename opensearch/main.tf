@@ -1,5 +1,14 @@
 ﻿data "aws_caller_identity" "current" {}
 
+# NextGen コレクショングループ（generation=NEXTGEN）。
+# Classic から移行：コレクションを本グループに所属させて NextGen 化する。
+# NextGen は compute/storage 分離＋scale-to-zero（idle≈$0）。standby_replicas は NextGen 必須=ENABLED。
+resource "aws_opensearchserverless_collection_group" "main" {
+  name             = "${var.project_name}-group"
+  generation       = "NEXTGEN"
+  standby_replicas = "ENABLED"
+}
+
 resource "aws_opensearchserverless_security_policy" "encryption" {
   name = "${var.project_name}-enc"
   type = "encryption"
@@ -55,8 +64,9 @@ resource "aws_opensearchserverless_access_policy" "main" {
 }
 
 resource "aws_opensearchserverless_collection" "main" {
-  name = "${var.project_name}-collection"
-  type = "VECTORSEARCH"
+  name                  = "${var.project_name}-collection"
+  type                  = "VECTORSEARCH"
+  collection_group_name = aws_opensearchserverless_collection_group.main.name # NextGen 群へ所属＝NextGen 化（Classic を置換）
 
   depends_on = [
     aws_opensearchserverless_security_policy.encryption,
