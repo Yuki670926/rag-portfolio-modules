@@ -202,12 +202,15 @@ resource "aws_iam_role_policy" "lambda_authorizer" {
 }
 
 resource "aws_api_gateway_authorizer" "lambda" {
-  name                             = "${var.project_name}-lambda-authorizer"
-  rest_api_id                      = aws_api_gateway_rest_api.main.id
-  type                             = "TOKEN"
-  authorizer_uri                   = var.authorizer_lambda_invoke_arn
-  identity_source                  = "method.request.header.Authorization"
-  authorizer_result_ttl_in_seconds = 300
+  name            = "${var.project_name}-lambda-authorizer"
+  rest_api_id     = aws_api_gateway_rest_api.main.id
+  type            = "TOKEN"
+  authorizer_uri  = var.authorizer_lambda_invoke_arn
+  identity_source = "method.request.header.Authorization"
+  # TTL=0 でキャッシュ無効化。TOKEN authorizer はトークン単位で結果をキャッシュするため、
+  # 特定メソッドの結果が他メソッド(例 /upload→/status)に流用され 403 になる事故を防ぐ。
+  # （ハンドラ側もワイルドカード Resource を返すが、TTL=0 でキャッシュ要因を完全に排除）。
+  authorizer_result_ttl_in_seconds = 0
 }
 
 resource "aws_lambda_permission" "api_gateway_authorizer" {
