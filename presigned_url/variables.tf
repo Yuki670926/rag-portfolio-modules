@@ -55,3 +55,21 @@ variable "pdf_indexes_table_arn" {
   description = "pdf_indexes テーブルの ARN（dynamodb:GetItem 用）"
   default     = ""
 }
+
+variable "vector_store_type" {
+  type        = string
+  description = "ベクトルストア種別。s3_vectors のとき /status は KB 取り込みジョブ状態で判定する"
+  default     = "opensearch"
+}
+
+variable "knowledge_base_id" {
+  type        = string
+  description = "s3_vectors 時の Knowledge Base ID（/status の取り込みジョブ照会用）"
+  default     = ""
+}
+
+variable "data_source_id" {
+  type        = string
+  description = "s3_vectors 時の Data Source ID（/status の取り込みジョブ照会用）"
+  default     = ""
+}

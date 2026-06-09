@@ -44,11 +44,18 @@ resource "aws_iam_role_policy" "presigned_url" {
         Resource = var.kms_key_arn
       },
       {
-        # GET /status：索引化の準備完了を pdf_indexes から読む（GetItem のみ）。
+        # GET /status（opensearch時）：索引化の準備完了を pdf_indexes から読む（GetItem のみ）。
         # DynamoDB は同一 KMS 鍵で暗号化されており、復号は上の kms:Decrypt で賄える。
         Effect   = "Allow"
         Action   = ["dynamodb:GetItem"]
         Resource = var.pdf_indexes_table_arn
+      },
+      {
+        # GET /status（s3_vectors時）：最新の KB 取り込みジョブ状態を読む（read-only）。
+        # KB ID は count で動的（opensearch時は不在）のため knowledge-base/* に限定。
+        Effect   = "Allow"
+        Action   = ["bedrock:ListIngestionJobs", "bedrock:GetIngestionJob"]
+        Resource = "arn:aws:bedrock:*:*:knowledge-base/*"
       }
     ]
   })
@@ -67,6 +74,9 @@ resource "aws_lambda_function" "presigned_url" {
     variables = {
       DOCUMENTS_BUCKET  = var.documents_bucket_name
       PDF_INDEXES_TABLE = var.pdf_indexes_table_name
+      VECTOR_STORE_TYPE = var.vector_store_type
+      KNOWLEDGE_BASE_ID = var.knowledge_base_id
+      DATA_SOURCE_ID    = var.data_source_id
     }
   }
 
