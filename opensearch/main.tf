@@ -21,33 +21,33 @@ resource "aws_opensearchserverless_security_policy" "encryption" {
   })
 }
 
+locals {
+  os_net_rules = [
+    {
+      ResourceType = "collection"
+      Resource     = ["collection/${var.project_name}-collection"]
+    },
+    {
+      ResourceType = "dashboard"
+      Resource     = ["collection/${var.project_name}-collection"]
+    }
+  ]
+}
+
 resource "aws_opensearchserverless_security_policy" "network" {
   name = "${var.project_name}-net"
   type = "network"
   # enable_private_networking=true のとき公開アクセスを閉じ、aoss 専用 VPC エンドポイント
   # (SourceVPCEs)からのみ到達可能にする＝ネットワーク隔離。false のときは従来どおり公開。
-  policy = jsonencode([
-    merge(
-      {
-        Rules = [
-          {
-            ResourceType = "collection"
-            Resource     = ["collection/${var.project_name}-collection"]
-          },
-          {
-            ResourceType = "dashboard"
-            Resource     = ["collection/${var.project_name}-collection"]
-          }
-        ]
-      },
-      var.enable_private_networking ? {
-        AllowFromPublic = false
-        SourceVPCEs     = [var.aoss_vpc_endpoint_id]
-        } : {
-        AllowFromPublic = true
-      }
-    )
-  ])
+  # ※ 三項は jsonencode の文字列結果に掛ける（オブジェクトの三項は両分岐で型が一致せず不可）。
+  policy = var.enable_private_networking ? jsonencode([{
+    Rules           = local.os_net_rules
+    AllowFromPublic = false
+    SourceVPCEs     = [var.aoss_vpc_endpoint_id]
+    }]) : jsonencode([{
+    Rules           = local.os_net_rules
+    AllowFromPublic = true
+  }])
 }
 
 resource "aws_opensearchserverless_access_policy" "main" {
