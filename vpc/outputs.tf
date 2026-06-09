@@ -20,3 +20,8 @@ output "lambda_security_group_id" {
   value       = aws_security_group.lambda.id
   description = "Lambda用セキュリティグループID"
 }
+
+output "aoss_vpc_endpoint_id" {
+  value       = try(aws_opensearchserverless_vpc_endpoint.aoss[0].id, "")
+  description = "aoss 専用 VPC エンドポイントID（opensearch network policy の SourceVPCEs 用。非VPC時は空）"
+}

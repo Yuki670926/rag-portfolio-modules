@@ -144,6 +144,33 @@ resource "aws_vpc_endpoint" "bedrock_agent_runtime" {
   }
 }
 
+# SSM インターフェースエンドポイント（VPC内 Lambda が SSM Parameter からベクトルストア
+# エンドポイント等を取得するため。opensearch×VPC で query/ingest が利用）
+resource "aws_vpc_endpoint" "ssm" {
+  count               = var.enable_private_networking ? 1 : 0
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.ap-northeast-1.ssm"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoint.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name = "${var.project_name}-ssm-endpoint"
+  }
+}
+
+# OpenSearch Serverless 専用 VPC エンドポイント（aoss）。collection の network policy で
+# この EP の id を SourceVPCEs に指定し、公開アクセスを閉じて VPC 隔離する。
+# ※ aoss は generic aws_vpc_endpoint ではなく専用リソースを使う。
+resource "aws_opensearchserverless_vpc_endpoint" "aoss" {
+  count              = var.enable_private_networking ? 1 : 0
+  name               = "${var.project_name}-aoss-vpce"
+  vpc_id             = aws_vpc.main.id
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoint.id]
+}
+
 # Lambda用セキュリティグループ
 resource "aws_security_group" "lambda" {
   name        = "${var.project_name}-lambda-sg"

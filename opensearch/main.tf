@@ -1,4 +1,4 @@
-﻿data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" {}
 
 # NextGen コレクショングループ（generation=NEXTGEN）。
 # Classic から移行：コレクションを本グループに所属させて NextGen 化する。
@@ -24,19 +24,30 @@ resource "aws_opensearchserverless_security_policy" "encryption" {
 resource "aws_opensearchserverless_security_policy" "network" {
   name = "${var.project_name}-net"
   type = "network"
-  policy = jsonencode([{
-    Rules = [
+  # enable_private_networking=true のとき公開アクセスを閉じ、aoss 専用 VPC エンドポイント
+  # (SourceVPCEs)からのみ到達可能にする＝ネットワーク隔離。false のときは従来どおり公開。
+  policy = jsonencode([
+    merge(
       {
-        ResourceType = "collection"
-        Resource     = ["collection/${var.project_name}-collection"]
+        Rules = [
+          {
+            ResourceType = "collection"
+            Resource     = ["collection/${var.project_name}-collection"]
+          },
+          {
+            ResourceType = "dashboard"
+            Resource     = ["collection/${var.project_name}-collection"]
+          }
+        ]
       },
-      {
-        ResourceType = "dashboard"
-        Resource     = ["collection/${var.project_name}-collection"]
+      var.enable_private_networking ? {
+        AllowFromPublic = false
+        SourceVPCEs     = [var.aoss_vpc_endpoint_id]
+        } : {
+        AllowFromPublic = true
       }
-    ]
-    AllowFromPublic = true
-  }])
+    )
+  ])
 }
 
 resource "aws_opensearchserverless_access_policy" "main" {

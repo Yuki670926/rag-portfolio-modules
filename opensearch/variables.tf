@@ -1,4 +1,4 @@
-﻿variable "project_name" {
+variable "project_name" {
   type = string
 }
 
@@ -12,4 +12,16 @@ variable "ingest_lambda_role_arn" {
 variable "query_lambda_role_arn" {
   type        = string
   description = "query Lambda IAMロールのARN"
+}
+
+variable "enable_private_networking" {
+  type        = bool
+  description = "true でネットワークポリシーを公開→aoss VPC EP 限定に切替（VPC 隔離）"
+  default     = false
+}
+
+variable "aoss_vpc_endpoint_id" {
+  type        = string
+  description = "aoss 専用 VPC エンドポイントID（enable_private_networking=true 時に SourceVPCEs へ）"
+  default     = ""
 }
