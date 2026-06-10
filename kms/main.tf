@@ -168,3 +168,37 @@ resource "aws_kms_alias" "cloudtrail" {
   name          = "alias/${var.project_name}-cloudtrail"
   target_key_id = aws_kms_key.cloudtrail.key_id
 }
+
+# OpenSearch Serverless 用 CMK（create_aoss_key=true のときのみ＝vector_store_type=opensearch）。
+# 全データストア CMK 統一の方針。aoss は encryption policy(KmsARN) 経由で本鍵を使い、
+# 作成プリンシパル(Admin)の IAM 権限で grant(GenerateDataKey/Decrypt) が張られる。
+# 鍵を無効化すれば collection データは暗号学的に消去できる（crypto-shredding）。
+resource "aws_kms_key" "aoss" {
+  count                   = var.create_aoss_key ? 1 : 0
+  description             = "KMS key for OpenSearch Serverless collection"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "Enable IAM User Permissions"
+        Effect    = "Allow"
+        Principal = { AWS = "arn:aws:iam::${var.account_id}:root" }
+        Action    = "kms:*"
+        Resource  = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-aoss-key"
+  }
+}
+
+resource "aws_kms_alias" "aoss" {
+  count         = var.create_aoss_key ? 1 : 0
+  name          = "alias/${var.project_name}-aoss"
+  target_key_id = aws_kms_key.aoss[0].key_id
+}

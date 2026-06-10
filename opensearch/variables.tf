@@ -25,3 +25,9 @@ variable "aoss_vpc_endpoint_id" {
   description = "aoss 専用 VPC エンドポイントID（enable_private_networking=true 時に SourceVPCEs へ）"
   default     = ""
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "collection 暗号化用 CMK の ARN（空なら AWS 所有キー）"
+  default     = ""
+}

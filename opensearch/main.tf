@@ -12,7 +12,17 @@ resource "aws_opensearchserverless_collection_group" "main" {
 resource "aws_opensearchserverless_security_policy" "encryption" {
   name = "${var.project_name}-enc"
   type = "encryption"
-  policy = jsonencode({
+  # kms_key_arn 指定時は CMK（AWSOwnedKey=false + KmsARN）、未指定時は AWS 所有キー。
+  # 注意：既存 collection の鍵は変更不可（公式仕様）。鍵を変える場合は collection の
+  # 作り直しが必要（派生データなので再 ingest で復元可能）。
+  policy = var.kms_key_arn != "" ? jsonencode({
+    Rules = [{
+      ResourceType = "collection"
+      Resource     = ["collection/${var.project_name}-collection"]
+    }]
+    AWSOwnedKey = false
+    KmsARN      = var.kms_key_arn
+    }) : jsonencode({
     Rules = [{
       ResourceType = "collection"
       Resource     = ["collection/${var.project_name}-collection"]
