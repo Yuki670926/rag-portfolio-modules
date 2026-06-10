@@ -66,7 +66,7 @@ resource "aws_lambda_function" "presigned_url" {
   function_name    = "${var.project_name}-presigned-url"
   role             = aws_iam_role.presigned_url.arn
   handler          = "handler.handler"
-  runtime          = "python3.12"
+  runtime          = "python3.13"
   timeout          = 30
   source_code_hash = data.archive_file.presigned_url.output_base64sha256
 
@@ -80,9 +80,20 @@ resource "aws_lambda_function" "presigned_url" {
     }
   }
 
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.presigned_url.name
+  }
+
   tags = {
     Name = "${var.project_name}-presigned-url"
   }
+}
+
+# ログ保持 30 日（既定の自動作成ロググループは保持無期限のため、IaC 管理のグループへ出力を切替）
+resource "aws_cloudwatch_log_group" "presigned_url" {
+  name              = "/lambda/${var.project_name}-presigned-url"
+  retention_in_days = 30
 }
 
 resource "aws_api_gateway_resource" "upload" {

@@ -22,6 +22,6 @@ output "lambda_security_group_id" {
 }
 
 output "aoss_vpc_endpoint_id" {
-  value       = try(aws_opensearchserverless_vpc_endpoint.aoss[0].id, "")
-  description = "aoss 専用 VPC エンドポイントID（opensearch network policy の SourceVPCEs 用。非VPC時は空）"
+  value       = try(aws_vpc_endpoint.aoss_data[0].id, "")
+  description = "aoss-data 標準 VPC エンドポイントID（opensearch network policy の SourceVPCEs 用。非VPC時は空）"
 }

@@ -5,7 +5,7 @@
 #   V3からアーキテクチャsuffix(-x86_64)が必須。:19 はライブラリ v3.16.0 に対応。
 # ------------------------------------------------------------
 locals {
-  powertools_layer_arn = "arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312-x86_64:19"
+  powertools_layer_arn = "arn:aws:lambda:ap-northeast-1:017000801446:layer:AWSLambdaPowertoolsPythonV3-python313-x86_64:22"
 }
 
 data "archive_file" "ingest" {
@@ -242,7 +242,7 @@ resource "aws_lambda_layer_version" "ingest_query" {
   layer_name          = "${var.project_name}-ingest-query-deps"
   filename            = data.archive_file.ingest_query_layer.output_path
   source_code_hash    = data.archive_file.ingest_query_layer.output_base64sha256
-  compatible_runtimes = ["python3.12"]
+  compatible_runtimes = ["python3.13"]
 }
 
 # ingest Lambda
@@ -251,7 +251,7 @@ resource "aws_lambda_function" "ingest" {
   function_name    = "${var.project_name}-ingest"
   role             = aws_iam_role.ingest.arn
   handler          = "handler.handler"
-  runtime          = "python3.12"
+  runtime          = "python3.13"
   timeout          = 300
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.ingest.output_base64sha256
@@ -287,6 +287,11 @@ resource "aws_lambda_function" "ingest" {
     }
   }
 
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.ingest.name
+  }
+
   tracing_config {
     mode = "Active"
   }
@@ -299,7 +304,7 @@ resource "aws_lambda_function" "query" {
   function_name    = "${var.project_name}-query"
   role             = aws_iam_role.query.arn
   handler          = "handler.handler"
-  runtime          = "python3.12"
+  runtime          = "python3.13"
   timeout          = 60
   memory_size      = var.memory_size
   source_code_hash = data.archive_file.query.output_base64sha256
@@ -330,6 +335,11 @@ resource "aws_lambda_function" "query" {
     }
   }
 
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.query.name
+  }
+
   tracing_config {
     mode = "Active"
   }
@@ -349,7 +359,7 @@ resource "aws_lambda_layer_version" "authorizer" {
   layer_name          = "${var.project_name}-authorizer-deps"
   filename            = data.archive_file.authorizer_layer.output_path
   source_code_hash    = data.archive_file.authorizer_layer.output_base64sha256
-  compatible_runtimes = ["python3.12"]
+  compatible_runtimes = ["python3.13"]
 }
 
 # authorizer Lambda
@@ -358,7 +368,7 @@ resource "aws_lambda_function" "authorizer" {
   function_name    = "${var.project_name}-authorizer"
   role             = aws_iam_role.authorizer.arn
   handler          = "handler.handler"
-  runtime          = "python3.12"
+  runtime          = "python3.13"
   timeout          = 30
   source_code_hash = data.archive_file.authorizer.output_base64sha256
   layers           = [local.powertools_layer_arn, aws_lambda_layer_version.authorizer.arn]
@@ -373,6 +383,11 @@ resource "aws_lambda_function" "authorizer" {
       POWERTOOLS_LOG_LEVEL         = "INFO"
       POWERTOOLS_METRICS_NAMESPACE = "RagPortfolio"
     }
+  }
+
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.authorizer.name
   }
 
   tags = {
@@ -394,4 +409,22 @@ resource "aws_lambda_permission" "s3_ingest" {
 resource "aws_lambda_function_event_invoke_config" "ingest" {
   function_name          = aws_lambda_function.ingest.function_name
   maximum_retry_attempts = 2
+}
+
+# ログ保持 30 日（既定の自動作成ロググループは保持無期限のため、IaC 管理のグループへ出力を切替）
+resource "aws_cloudwatch_log_group" "ingest" {
+  name              = "/lambda/${var.project_name}-ingest"
+  retention_in_days = 30
+}
+
+# ログ保持 30 日（既定の自動作成ロググループは保持無期限のため、IaC 管理のグループへ出力を切替）
+resource "aws_cloudwatch_log_group" "query" {
+  name              = "/lambda/${var.project_name}-query"
+  retention_in_days = 30
+}
+
+# ログ保持 30 日（既定の自動作成ロググループは保持無期限のため、IaC 管理のグループへ出力を切替）
+resource "aws_cloudwatch_log_group" "authorizer" {
+  name              = "/lambda/${var.project_name}-authorizer"
+  retention_in_days = 30
 }

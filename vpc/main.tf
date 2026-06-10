@@ -160,15 +160,24 @@ resource "aws_vpc_endpoint" "ssm" {
   }
 }
 
-# OpenSearch Serverless 専用 VPC エンドポイント（aoss）。collection の network policy で
-# この EP の id を SourceVPCEs に指定し、公開アクセスを閉じて VPC 隔離する。
-# ※ aoss は generic aws_vpc_endpoint ではなく専用リソースを使う。
-resource "aws_opensearchserverless_vpc_endpoint" "aoss" {
-  count              = var.enable_private_networking ? 1 : 0
-  name               = "${var.project_name}-aoss-vpce"
-  vpc_id             = aws_vpc.main.id
-  subnet_ids         = aws_subnet.private[*].id
-  security_group_ids = [aws_security_group.vpc_endpoint.id]
+# OpenSearch Serverless データプレーン VPC エンドポイント（NextGen 用・標準 PrivateLink）。
+# NextGen の collection エンドポイント(*.aoss.{region}.on.aws)は、Classic 専用の
+# aws_opensearchserverless_vpc_endpoint（aoss.amazonaws.com 系のみ解決）では到達できない。
+# 標準 Interface EP（service: aoss-data）＋ private DNS で *.aoss.{region}.on.aws を解決し、
+# この vpce id を network policy の SourceVPCEs に指定して VPC 隔離する。
+# 参考: https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vpc.html
+resource "aws_vpc_endpoint" "aoss_data" {
+  count               = var.enable_private_networking ? 1 : 0
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.ap-northeast-1.aoss-data"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoint.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name = "${var.project_name}-aoss-data-endpoint"
+  }
 }
 
 # Lambda用セキュリティグループ

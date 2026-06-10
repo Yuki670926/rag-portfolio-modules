@@ -207,10 +207,11 @@ resource "aws_api_gateway_authorizer" "lambda" {
   type            = "TOKEN"
   authorizer_uri  = var.authorizer_lambda_invoke_arn
   identity_source = "method.request.header.Authorization"
-  # TTL=0 でキャッシュ無効化。TOKEN authorizer はトークン単位で結果をキャッシュするため、
-  # 特定メソッドの結果が他メソッド(例 /upload→/status)に流用され 403 になる事故を防ぐ。
-  # （ハンドラ側もワイルドカード Resource を返すが、TTL=0 でキャッシュ要因を完全に排除）。
-  authorizer_result_ttl_in_seconds = 0
+  # キャッシュ 300s。TOKEN authorizer の結果はトークン単位でキャッシュされるが、ハンドラが
+  # ステージ全メソッドのワイルドカード Resource を返すためメソッド間で流用されても安全
+  # （旧: 特定メソッドARN返却×キャッシュで /status 403 → 一時 TTL=0。全コール二重起動を
+  # 避けるため、ワイルドカード化を前提に復活）。
+  authorizer_result_ttl_in_seconds = 300
 }
 
 resource "aws_lambda_permission" "api_gateway_authorizer" {

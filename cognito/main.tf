@@ -156,7 +156,7 @@ resource "aws_lambda_function" "postauth" {
   function_name    = "${var.project_name}-postauth-warmer"
   role             = aws_iam_role.postauth.arn
   handler          = "handler.handler"
-  runtime          = "python3.12"
+  runtime          = "python3.13"
   timeout          = 5
   source_code_hash = data.archive_file.postauth.output_base64sha256
 
@@ -166,9 +166,20 @@ resource "aws_lambda_function" "postauth" {
     }
   }
 
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.postauth.name
+  }
+
   tags = {
     Name = "${var.project_name}-postauth-warmer"
   }
+}
+
+# ログ保持 30 日（既定の自動作成ロググループは保持無期限のため、IaC 管理のグループへ出力を切替）
+resource "aws_cloudwatch_log_group" "postauth" {
+  name              = "/lambda/${var.project_name}-postauth-warmer"
+  retention_in_days = 30
 }
 
 # Cognito が本 Lambda を呼び出す権限
