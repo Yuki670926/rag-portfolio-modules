@@ -116,38 +116,5 @@ resource "aws_cloudwatch_metric_alarm" "ingest_errors" {
   }
 }
 
-# opensearch-start Lambda エラーアラーム
-resource "aws_cloudwatch_metric_alarm" "opensearch_start_errors" {
-  alarm_name          = "${var.project_name}-opensearch-start-errors"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = 1
-  metric_name         = "Errors"
-  namespace           = "AWS/Lambda"
-  period              = 60
-  statistic           = "Sum"
-  threshold           = 1
-  alarm_description   = "opensearch-start Lambdaでエラーが発生しました"
-  alarm_actions       = [aws_sns_topic.alarm_notification.arn]
-
-  dimensions = {
-    FunctionName = "${var.project_name}-opensearch-start"
-  }
-}
-
-# opensearch-stop Lambda エラーアラーム
-resource "aws_cloudwatch_metric_alarm" "opensearch_stop_errors" {
-  alarm_name          = "${var.project_name}-opensearch-stop-errors"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = 1
-  metric_name         = "Errors"
-  namespace           = "AWS/Lambda"
-  period              = 60
-  statistic           = "Sum"
-  threshold           = 1
-  alarm_description   = "opensearch-stop Lambdaでエラーが発生しました"
-  alarm_actions       = [aws_sns_topic.alarm_notification.arn]
-
-  dimensions = {
-    FunctionName = "${var.project_name}-opensearch-stop"
-  }
-}
+# （opensearch-start/stop のアラームは削除済：対象 Lambda は eventbridge モジュールごと撤去。
+#   NextGen の scale-to-zero により起動停止スケジューラ自体が不要化）
