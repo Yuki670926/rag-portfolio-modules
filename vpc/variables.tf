@@ -22,3 +22,9 @@ variable "enable_private_networking" {
   description = "プライベートネットワーキングを有効化する（LambdaのVPC配置＋VPCエンドポイント経由のプライベート通信）。層3の経路隔離。"
   default     = false
 }
+
+variable "aoss_endpoint_enabled" {
+  type        = bool
+  description = "aoss-data VPC EP を作成するか。OpenSearch を使う場合のみ true（s3_vectors では不要な固定費になるため作らない）"
+  default     = true
+}
