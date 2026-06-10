@@ -1,4 +1,4 @@
-﻿terraform {
+terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -47,7 +47,9 @@ resource "aws_iam_role_policy_attachment" "github_actions" {
 
 # ===== Frontend デプロイ専用ロール（最小権限） =====
 # deploy-frontend.yml 用。S3同期 + CloudFront invalidation のみ許可。
-# 信頼条件は main ブランチからのデプロイに限定（apply用ロールより厳格）。
+# 信頼条件は GitHub Environment 単位（apply用ロールと同じ環境スコープ）。
+# deploy-frontend.yml が environment を指定するため、OIDC の sub は
+# ref:refs/heads/main ではなく environment:<env> 形式になる（GitHub の仕様）。
 resource "aws_iam_role" "frontend_deploy" {
   name = "${var.project_name}-frontend-deploy-role"
 
@@ -61,7 +63,7 @@ resource "aws_iam_role" "frontend_deploy" {
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_username}/${var.github_repo}:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub" = "repo:${var.github_username}/${var.github_repo}:environment:${var.environment}"
         }
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
