@@ -76,50 +76,10 @@ resource "aws_kms_alias" "s3" {
   target_key_id = aws_kms_key.s3.key_id
 }
 
-# DynamoDB用KMSキー
-resource "aws_kms_key" "dynamodb" {
-  description             = "KMS key for DynamoDB tables"
-  deletion_window_in_days = 7
-  enable_key_rotation     = true
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "Enable IAM User Permissions"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${var.account_id}:root"
-        }
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      {
-        Sid    = "Allow DynamoDB Service"
-        Effect = "Allow"
-        Principal = {
-          Service = "dynamodb.amazonaws.com"
-        }
-        Action = [
-          "kms:GenerateDataKey",
-          "kms:Decrypt",
-          "kms:DescribeKey"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-
-  tags = {
-    Name = "${var.project_name}-dynamodb-key"
-  }
-}
-
-# DynamoDB用KMSキーエイリアス
-resource "aws_kms_alias" "dynamodb" {
-  name          = "alias/${var.project_name}-dynamodb"
-  target_key_id = aws_kms_key.dynamodb.key_id
-}
+# （DynamoDB 専用キーは削除：2026-06-10 設計判断 a）
+# テーブルは同一データドメインの S3 用 CMK で暗号化しており、専用キーは未使用だった。
+# 鍵分離の便益（爆発半径の分離）より管理簡素・コスト（$1/月）を優先し単一 CMK に統一。
+# 用途分離が必要になったら鍵を再作成し、lambda ロールへの kms 権限配線とセットで導入する。
 
 # SQS用KMSキー
 resource "aws_kms_key" "sqs" {

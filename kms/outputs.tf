@@ -3,11 +3,6 @@ output "s3_kms_key_arn" {
   description = "S3用KMSキーのARN"
 }
 
-output "dynamodb_kms_key_arn" {
-  value       = aws_kms_key.dynamodb.arn
-  description = "DynamoDB用KMSキーのARN"
-}
-
 output "sqs_kms_key_arn" {
   value       = aws_kms_key.sqs.arn
   description = "SQS用KMSキーのARN"
