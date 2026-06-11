@@ -97,11 +97,12 @@ resource "aws_s3_object" "config" {
   cache_control = "no-cache, no-store, must-revalidate"
 
   content = jsonencode({
-    API_URL          = var.api_url
-    USER_POOL_ID     = var.user_pool_id
-    CLIENT_ID        = var.client_id
-    REGION           = var.aws_region
-    DOCUMENTS_BUCKET = "${var.project_name}-documents-${var.account_id}"
+    API_URL           = var.api_url
+    USER_POOL_ID      = var.user_pool_id
+    CLIENT_ID         = var.client_id
+    REGION            = var.aws_region
+    DOCUMENTS_BUCKET  = "${var.project_name}-documents-${var.account_id}"
+    VECTOR_STORE_TYPE = var.vector_store_type # フロントが dual のときだけモードトグルを表示
   })
 }
 

@@ -41,3 +41,9 @@ variable "aws_region" {
   description = "AWSリージョン"
   default     = "ap-northeast-1"
 }
+
+variable "vector_store_type" {
+  type        = string
+  description = "config.json 経由でフロントに公開（dual のときのみモードトグルを表示）"
+  default     = "s3_vectors"
+}
