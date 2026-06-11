@@ -118,3 +118,30 @@ resource "aws_cloudwatch_metric_alarm" "ingest_errors" {
 
 # （opensearch-start/stop のアラームは削除済：対象 Lambda は eventbridge モジュールごと撤去。
 #   NextGen の scale-to-zero により起動停止スケジューラ自体が不要化）
+
+# AOSS の OCU 滞留アラーム：scale-to-zero が想定どおり効いているかの監視。
+# OCU はログイン起点ウォーマー後しばらく >0 が正常だが、平均 >0 が 4 時間続くのは
+# 「ゼロに戻っていない」シグナル（検知が $60 Budgets 消化後しかない穴を塞ぐ）。
+# 次元の CollectionGroupId は collection 再作成で変わるため、root から
+# Terraform グラフ経由（module.opensearch の output）で受け取り自動追従させる。
+resource "aws_cloudwatch_metric_alarm" "aoss_ocu" {
+  for_each = var.aoss_collection_group_id != "" ? toset(["SearchOCU", "IndexingOCU"]) : toset([])
+
+  alarm_name          = "${var.project_name}-aoss-${lower(each.key)}-lingering"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 4
+  metric_name         = each.key
+  namespace           = "AWS/AOSS"
+  period              = 3600
+  statistic           = "Average"
+  threshold           = 0
+  treat_missing_data  = "notBreaching" # scale-to-zero 中はデータ無し＝正常
+  alarm_description   = "AOSS の ${each.key} が 4 時間連続で 0 より大きい（scale-to-zero 不全の疑い）"
+  alarm_actions       = [aws_sns_topic.alarm_notification.arn]
+
+  dimensions = {
+    ClientId            = var.account_id
+    CollectionGroupId   = var.aoss_collection_group_id
+    CollectionGroupName = var.aoss_collection_group_name
+  }
+}

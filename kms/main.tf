@@ -126,8 +126,9 @@ resource "aws_kms_alias" "sqs" {
   target_key_id = aws_kms_key.sqs.key_id
 }
 
-# CloudTrail用KMSキー
+# CloudTrail用KMSキー（create_cloudtrail_key ゲート：per-env trail の組織 trail 一本化で不要化）
 resource "aws_kms_key" "cloudtrail" {
+  count                   = var.create_cloudtrail_key ? 1 : 0
   description             = "KMS key for CloudTrail logs"
   deletion_window_in_days = 7
   enable_key_rotation     = true
@@ -166,8 +167,9 @@ resource "aws_kms_key" "cloudtrail" {
 
 # CloudTrail用KMSキーエイリアス
 resource "aws_kms_alias" "cloudtrail" {
+  count         = var.create_cloudtrail_key ? 1 : 0
   name          = "alias/${var.project_name}-cloudtrail"
-  target_key_id = aws_kms_key.cloudtrail.key_id
+  target_key_id = aws_kms_key.cloudtrail[0].key_id
 }
 
 # OpenSearch Serverless 用 CMK（create_aoss_key=true のときのみ＝vector_store_type=opensearch）。
@@ -180,17 +182,36 @@ resource "aws_kms_key" "aoss" {
   deletion_window_in_days = 7
   enable_key_rotation     = true
 
+  # grant 経路の明示：aoss は encryption policy 経由で collection 作成プリンシパルが
+  # CreateGrant を張る方式。root-only ポリシーだと apply ロールの AdministratorAccess に
+  # 暗黙依存するため、CreateGrant/DescribeKey を ViaService=aoss ＋ AWS リソース向け grant に
+  # 限定して明示許可する（CI 最小権限化への布石。crypto-shredding の意図は維持）。
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "Enable IAM User Permissions"
-        Effect    = "Allow"
-        Principal = { AWS = "arn:aws:iam::${var.account_id}:root" }
-        Action    = "kms:*"
-        Resource  = "*"
-      }
-    ]
+    Statement = concat(
+      [
+        {
+          Sid       = "Enable IAM User Permissions"
+          Effect    = "Allow"
+          Principal = { AWS = "arn:aws:iam::${var.account_id}:root" }
+          Action    = "kms:*"
+          Resource  = "*"
+        }
+      ],
+      length(var.aoss_grant_principal_arns) > 0 ? [
+        {
+          Sid       = "AllowGrantCreationForAOSS"
+          Effect    = "Allow"
+          Principal = { AWS = var.aoss_grant_principal_arns }
+          Action    = ["kms:CreateGrant", "kms:DescribeKey"]
+          Resource  = "*"
+          Condition = {
+            Bool         = { "kms:GrantIsForAWSResource" = "true" }
+            StringEquals = { "kms:ViaService" = "aoss.${var.aws_region}.amazonaws.com" }
+          }
+        }
+      ] : []
+    )
   })
 
   tags = {

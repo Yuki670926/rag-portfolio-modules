@@ -87,12 +87,28 @@ data "aws_secretsmanager_secret_version" "admin_password" {
   secret_id = data.aws_secretsmanager_secret.admin_password.id
 }
 
+# 管理ユーザーのメール（＝ログイン username）。公開リポにハードコードしないため、
+# budgets と同じ Secrets Manager パターンで alert-email（{"email": "..."}）を流用する。
+# 値の変更は user の置換になる：仮パスワードで再作成されるため、各環境で
+# admin-set-user-password --permanent の再実行が必要（runbook 参照）。
+data "aws_secretsmanager_secret" "admin_email" {
+  name = "rp-${var.environment}-alert-email"
+}
+
+data "aws_secretsmanager_secret_version" "admin_email" {
+  secret_id = data.aws_secretsmanager_secret.admin_email.id
+}
+
+locals {
+  admin_email = jsondecode(data.aws_secretsmanager_secret_version.admin_email.secret_string)["email"]
+}
+
 resource "aws_cognito_user" "admin" {
   user_pool_id = aws_cognito_user_pool.main.id
-  username     = var.admin_email
+  username     = local.admin_email
 
   attributes = {
-    email          = var.admin_email
+    email          = local.admin_email
     email_verified = true
   }
 

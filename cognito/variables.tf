@@ -7,12 +7,6 @@ variable "environment" {
   description = "環境名（dev / stag / prod）"
 }
 
-variable "admin_email" {
-  type        = string
-  description = "管理者のメールアドレス"
-  default     = "test@example.com"
-}
-
 variable "aws_region" {
   type        = string
   description = "AWSリージョン（postauth ウォーマーが query Lambda の ARN を構築するのに使用）"

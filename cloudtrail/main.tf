@@ -1,6 +1,9 @@
 # CloudTrailログ保存用S3バケット
 resource "aws_s3_bucket" "cloudtrail" {
   bucket = "${var.project_name}-cloudtrail-${var.account_id}"
+  # 組織 trail への一本化（モジュール撤去）の移行用：true にすると destroy 時に
+  # 中身ごと削除できる（同一イベントは組織 trail に記録済みのため監査ログは失われない）
+  force_destroy = var.force_destroy
 
   tags = {
     Name = "${var.project_name}-cloudtrail"

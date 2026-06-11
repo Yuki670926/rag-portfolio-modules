@@ -166,41 +166,10 @@ resource "aws_api_gateway_gateway_response" "cors_5xx" {
 }
 
 # Lambda Authorizer
-resource "aws_iam_role" "lambda_authorizer" {
-  name = "${var.project_name}-lambda-authorizer-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
-
-resource "aws_iam_role_policy" "lambda_authorizer" {
-  name = "${var.project_name}-lambda-authorizer-policy"
-  role = aws_iam_role.lambda_authorizer.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
-}
-
+# （authorizer の実行ロール／ポリシーは lambda モジュール側の定義に一本化。
+#   かつて本モジュールにも同名の aws_iam_role.lambda_authorizer / aws_iam_role_policy が
+#   二重定義されていたが未参照の死にリソースだったため撤去。state からは root の
+#   removed ブロック（destroy=false）で外し、物理ロールは lambda モジュール管理を継続。）
 resource "aws_api_gateway_authorizer" "lambda" {
   name            = "${var.project_name}-lambda-authorizer"
   rest_api_id     = aws_api_gateway_rest_api.main.id
