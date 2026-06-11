@@ -47,3 +47,9 @@ variable "vector_store_type" {
   description = "config.json 経由でフロントに公開（dual のときのみモードトグルを表示）"
   default     = "s3_vectors"
 }
+
+variable "prevent_destroy" {
+  type        = bool
+  description = "documents バケットの誤破壊ガード（prod で true）。lifecycle.prevent_destroy はリテラル必須で変数分岐できないため、ガードリソース＋count で環境分岐する"
+  default     = false
+}

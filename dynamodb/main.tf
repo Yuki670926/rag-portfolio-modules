@@ -1,5 +1,5 @@
 locals {
-  name_prefix = "${var.project_name}"
+  name_prefix = var.project_name
 }
 
 resource "aws_dynamodb_table" "conversations" {
@@ -7,6 +7,9 @@ resource "aws_dynamodb_table" "conversations" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "user_id"
   range_key    = "timestamp"
+  # 削除保護（prod のみ true）：会話履歴は再生成不能の正本。誤 destroy・置換による
+  # 不可逆な消失を API レベルで拒否する（PITR はテーブル削除そのものは防げない）
+  deletion_protection_enabled = var.deletion_protection
 
   attribute {
     name = "user_id"
@@ -43,6 +46,8 @@ resource "aws_dynamodb_table" "sessions" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "user_id"
   range_key    = "last_accessed_at"
+  # 削除保護（prod のみ true）：conversations と方針を揃える（追加コストなし・in-place）
+  deletion_protection_enabled = var.deletion_protection
 
   attribute {
     name = "user_id"
@@ -79,6 +84,8 @@ resource "aws_dynamodb_table" "pdf_indexes" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "user_id"
   range_key    = "pdf_name"
+  # 削除保護（prod のみ true）：派生データ（再 ingest で再生成可）だが方針を揃える
+  deletion_protection_enabled = var.deletion_protection
 
   attribute {
     name = "user_id"

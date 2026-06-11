@@ -23,6 +23,24 @@ resource "aws_s3_bucket_versioning" "documents" {
   }
 }
 
+# documents バケットの誤破壊ガード（prod のみ）。
+# lifecycle.prevent_destroy は Terraform の制約でリテラルのみ（変数不可）のため、
+# バケット本体に付けると全環境一律になってしまう。代わりに prevent_destroy 付きの
+# ガードリソースを count で環境分岐させる：バケットの destroy／置換は
+# triggers_replace 経由でこのガードの置換を要求し、prevent_destroy がそれを
+# 拒否することで間接的にバケットを守る（正本＝PDF の最後の砦。versioning／
+# force_destroy=false と併せた三段構え）。
+# 注意：保護の解除（true→false）もガード自身の destroy になるため拒否される。
+# 解除時はこの prevent_destroy を一時的に false にする 2 段階（それ自体が誤操作ガード）。
+resource "terraform_data" "documents_destroy_guard" {
+  count            = var.prevent_destroy ? 1 : 0
+  triggers_replace = [aws_s3_bucket.documents.id]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "aws_s3_bucket_notification" "documents" {
   bucket = aws_s3_bucket.documents.id
 

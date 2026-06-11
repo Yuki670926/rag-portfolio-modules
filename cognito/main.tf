@@ -10,6 +10,10 @@ terraform {
 resource "aws_cognito_user_pool" "main" {
   name = "${var.project_name}-user-pool"
 
+  # 削除保護（prod のみ ACTIVE）：schema 変更等で置換（replace）が要求された場合に
+  # apply を明示エラーで停止し、登録ユーザーの不可逆な消失を防ぐ
+  deletion_protection = var.deletion_protection ? "ACTIVE" : "INACTIVE"
+
   password_policy {
     minimum_length    = 8
     require_lowercase = true

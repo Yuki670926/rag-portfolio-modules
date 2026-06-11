@@ -23,3 +23,9 @@ variable "account_id" {
   type        = string
   description = "AWSアカウントID（postauth ウォーマーの IAM Resource ARN 構築に使用）"
 }
+
+variable "deletion_protection" {
+  type        = bool
+  description = "User Pool の削除保護（prod で true）。登録ユーザーは再生成不能のため、置換を要求する apply を明示エラーで止める"
+  default     = false
+}

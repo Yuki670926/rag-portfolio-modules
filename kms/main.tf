@@ -1,7 +1,8 @@
 # S3用KMSキー
 resource "aws_kms_key" "s3" {
-  description             = "KMS key for S3 buckets"
-  deletion_window_in_days = 7
+  description = "KMS key for S3 buckets"
+  # 削除待機（取消猶予）：正本を抱える鍵のため prod は 30 日（変数・他鍵は 7 日のまま）
+  deletion_window_in_days = var.s3_key_deletion_window_in_days
   enable_key_rotation     = true
 
   policy = jsonencode({
