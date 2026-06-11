@@ -114,7 +114,7 @@ resource "aws_vpc_endpoint" "bedrock" {
 }
 
 # （SQS の Interface EP は削除：DLQ への配送は Lambda サービス側が VPC 外で行うため、
-#   関数コードも SQS を直接呼ばず、VPC 内からの経路は不要。固定費 ~$15/月の削減）
+#   関数コードも SQS を直接呼ばず、VPC 内からの経路は不要。固定費 約$20/月の削減）
 
 # Bedrock Agent インターフェースエンドポイント（KBのStartIngestionJob用）
 resource "aws_vpc_endpoint" "bedrock_agent" {
@@ -171,7 +171,7 @@ resource "aws_vpc_endpoint" "ssm" {
 # 参考: https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vpc.html
 resource "aws_vpc_endpoint" "aoss_data" {
   # vector_store_type=s3_vectors のときは aoss に接続しないため EP を作らない
-  # （Interface EP は存在するだけで課金されるため、不要な固定費 ~$8/月 を回避）。
+  # （Interface EP は存在するだけで課金されるため、不要な固定費 約$20/月 を回避）。
   count               = var.enable_private_networking && var.aoss_endpoint_enabled ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.aoss-data"
