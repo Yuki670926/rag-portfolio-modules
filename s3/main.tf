@@ -28,8 +28,9 @@ resource "aws_s3_bucket_notification" "documents" {
 
   lambda_function {
     lambda_function_arn = var.ingest_lambda_arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_suffix       = ".pdf"
+    # 作成＝索引化、削除＝索引からの削除伝播（両ストアの整合維持）
+    events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+    filter_suffix = ".pdf"
   }
 }
 

@@ -28,3 +28,15 @@ variable "aoss_endpoint_enabled" {
   description = "aoss-data VPC EP を作成するか。OpenSearch を使う場合のみ true（s3_vectors では不要な固定費になるため作らない）"
   default     = true
 }
+
+variable "kb_endpoints_enabled" {
+  type        = bool
+  description = "bedrock-agent/agent-runtime EP を作るか（KB を使う s3_vectors/dual のときのみ true）"
+  default     = true
+}
+
+variable "ssm_endpoint_enabled" {
+  type        = bool
+  description = "SSM EP を作るか（OpenSearch のエンドポイント配布に使う opensearch/dual のときのみ true）"
+  default     = true
+}

@@ -109,9 +109,9 @@ resource "aws_iam_role_policy" "ingest" {
         Resource = var.kms_key_arn
       },
       {
-        # 索引化完了フラグの記録（フロントの準備完了 polling 用）。pdf_indexes へ PutItem のみ。
+        # 索引化完了フラグの記録/削除（フロントの準備完了 polling 用）。
         Effect   = "Allow"
-        Action   = ["dynamodb:PutItem"]
+        Action   = ["dynamodb:PutItem", "dynamodb:DeleteItem"]
         Resource = var.pdf_indexes_table_arn
       }
     ]

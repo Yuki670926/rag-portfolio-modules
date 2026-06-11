@@ -101,24 +101,13 @@ resource "aws_vpc_endpoint" "bedrock" {
   }
 }
 
-# SQS インターフェースエンドポイント
-resource "aws_vpc_endpoint" "sqs" {
-  count               = var.enable_private_networking ? 1 : 0
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.ap-northeast-1.sqs"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoint.id]
-  private_dns_enabled = true
-
-  tags = {
-    Name = "${var.project_name}-sqs-endpoint"
-  }
-}
+# （SQS の Interface EP は削除：DLQ への配送は Lambda サービス側が VPC 外で行うため、
+#   関数コードも SQS を直接呼ばず、VPC 内からの経路は不要。固定費 ~$15/月の削減）
 
 # Bedrock Agent インターフェースエンドポイント（KBのStartIngestionJob用）
 resource "aws_vpc_endpoint" "bedrock_agent" {
-  count               = var.enable_private_networking ? 1 : 0
+  # KB（s3_vectors/dual）利用時のみ。opensearch 単独では不要な固定費を作らない
+  count               = var.enable_private_networking && var.kb_endpoints_enabled ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.bedrock-agent"
   vpc_endpoint_type   = "Interface"
@@ -132,7 +121,8 @@ resource "aws_vpc_endpoint" "bedrock_agent" {
 
 # Bedrock Agent Runtime インターフェースエンドポイント（KBのRetrieve用）
 resource "aws_vpc_endpoint" "bedrock_agent_runtime" {
-  count               = var.enable_private_networking ? 1 : 0
+  # KB（s3_vectors/dual）利用時のみ
+  count               = var.enable_private_networking && var.kb_endpoints_enabled ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.bedrock-agent-runtime"
   vpc_endpoint_type   = "Interface"
@@ -147,7 +137,8 @@ resource "aws_vpc_endpoint" "bedrock_agent_runtime" {
 # SSM インターフェースエンドポイント（VPC内 Lambda が SSM Parameter からベクトルストア
 # エンドポイント等を取得するため。opensearch×VPC で query/ingest が利用）
 resource "aws_vpc_endpoint" "ssm" {
-  count               = var.enable_private_networking ? 1 : 0
+  # SSM param は OpenSearch エンドポイント配布専用のため opensearch/dual のときのみ
+  count               = var.enable_private_networking && var.ssm_endpoint_enabled ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.ssm"
   vpc_endpoint_type   = "Interface"
