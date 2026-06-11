@@ -44,10 +44,12 @@ resource "aws_iam_role_policy" "presigned_url" {
         Resource = var.kms_key_arn
       },
       {
-        # GET /status（opensearch時）：索引化の準備完了を pdf_indexes から読む（GetItem のみ）。
+        # GET /status：索引化の準備完了を pdf_indexes から読む（GetItem）。
+        # DeleteItem：POST /upload 成功時に同名 PDF の旧 readiness フラグを掃除し、
+        # 再アップロード直後の polling が前回の ready を拾う偽陽性を防ぐ（冪等）。
         # DynamoDB は同一 KMS 鍵で暗号化されており、復号は上の kms:Decrypt で賄える。
         Effect   = "Allow"
-        Action   = ["dynamodb:GetItem"]
+        Action   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
         Resource = var.pdf_indexes_table_arn
       },
       {

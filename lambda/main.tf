@@ -64,8 +64,10 @@ resource "aws_iam_role_policy" "ingest" {
         Resource = "*"
       },
       {
+        # ListIngestionJobs：同期ジョブ衝突（ConflictException）時に「実行中ジョブが
+        # 本イベントのオブジェクトをカバーしているか」を判定するため（ingest handler）
         Effect   = "Allow"
-        Action   = ["bedrock:StartIngestionJob"]
+        Action   = ["bedrock:StartIngestionJob", "bedrock:ListIngestionJobs"]
         Resource = var.knowledge_base_arn
       },
       {
