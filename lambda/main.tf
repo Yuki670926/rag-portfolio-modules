@@ -59,6 +59,14 @@ resource "aws_iam_role_policy" "ingest" {
         Resource = "${var.documents_bucket_arn}/*"
       },
       {
+        # ListBucket が無いと存在しないキーへの HeadObject が 404 でなく 403 になり、
+        # 削除イベントの「再アップロード済みか」判定（object_exists）が権限エラーと
+        # 不存在を区別できないため付与する
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = var.documents_bucket_arn
+      },
+      {
         Effect   = "Allow"
         Action   = ["bedrock:InvokeModel"]
         Resource = "*"
