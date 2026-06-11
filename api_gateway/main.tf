@@ -175,6 +175,11 @@ resource "aws_api_gateway_stage" "main" {
   tags = {
     Name = "${var.project_name}-stage"
   }
+
+  # ログ系の有効化（access_log_settings 含む）はアカウント単位の CloudWatch ロール
+  # 設定が前提（無いと UpdateStage が 400: "CloudWatch Logs role ARN must be set"）。
+  # method_settings 同様に順序を明示する。
+  depends_on = [aws_api_gateway_account.main]
 }
 
 # LambdaにAPI Gatewayからの呼び出し権限を付与
