@@ -8,6 +8,18 @@ resource "aws_vpc" "main" {
   }
 }
 
+# デフォルト SG の無効化（CKV2_AWS_12）：引数なしで Terraform 管理にすると
+# 全 in/out ルールが剥奪される。本構成の SG は全て明示定義
+# （vpc-endpoint-sg / lambda-sg）でデフォルト SG への参照は無いため動作影響ゼロ。
+# 「うっかりデフォルト SG を使う」事故の防止が目的。
+resource "aws_default_security_group" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project_name}-default-sg-locked"
+  }
+}
+
 resource "aws_subnet" "private" {
   count             = 2
   vpc_id            = aws_vpc.main.id

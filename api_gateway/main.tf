@@ -115,10 +115,62 @@ resource "aws_api_gateway_deployment" "main" {
   }
 }
 
+# API Gateway がアカウント単位で CloudWatch Logs へ書くためのロール
+# （リージョン毎・アカウント単位のシングルトン。本プロジェクトは 1 アカウント
+#   = 1 環境のため環境間で衝突しない）。method_settings の logging_level の前提。
+resource "aws_iam_role" "apigw_cloudwatch" {
+  name = "${var.project_name}-apigw-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "apigateway.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "apigw_cloudwatch" {
+  role       = aws_iam_role.apigw_cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.apigw_cloudwatch.arn
+  depends_on          = [aws_iam_role_policy_attachment.apigw_cloudwatch]
+}
+
+# アクセスログの出力先（CKV_AWS_76）。Lambda ログと同じ 30 日保持。
+resource "aws_cloudwatch_log_group" "api_access" {
+  name              = "/apigateway/${var.project_name}-access"
+  retention_in_days = 30
+}
+
 resource "aws_api_gateway_stage" "main" {
   deployment_id = aws_api_gateway_deployment.main.id
   rest_api_id   = aws_api_gateway_rest_api.main.id
   stage_name    = var.stage_name
+
+  # X-Ray（CKV_AWS_73）：Lambda 側は tracing Active 済みのため、ここを点けると
+  # API GW → Lambda のエンドツーエンドトレースが繋がる（無料枠内・実質 $0）
+  xray_tracing_enabled = true
+
+  # アクセスログ（CKV_AWS_76）：authorizer 拒否・429 など Lambda ログに残らない
+  # ゲートウェイ層の事象を記録（過去の /status 403 切り分けはまさにこの層だった）
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_access.arn
+    format = jsonencode({
+      requestId       = "$context.requestId"
+      ip              = "$context.identity.sourceIp"
+      requestTime     = "$context.requestTime"
+      httpMethod      = "$context.httpMethod"
+      resourcePath    = "$context.resourcePath"
+      status          = "$context.status"
+      responseLength  = "$context.responseLength"
+      authorizerError = "$context.authorizer.error"
+    })
+  }
 
   tags = {
     Name = "${var.project_name}-stage"
@@ -200,5 +252,11 @@ resource "aws_api_gateway_method_settings" "main" {
   settings {
     throttling_rate_limit  = 100
     throttling_burst_limit = 200
+    # 実行ログ（CKV2_AWS_4）：ERROR のみ（低トラフィックで費用ほぼゼロ）。
+    # 統合エラー・authorizer 失敗などゲートウェイ層の切り分け用。
+    # アカウント単位の CloudWatch ロール設定（aws_api_gateway_account）が前提。
+    logging_level = "ERROR"
   }
+
+  depends_on = [aws_api_gateway_account.main]
 }
